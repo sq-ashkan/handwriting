@@ -4,6 +4,7 @@ from tqdm import tqdm
 from PIL import Image
 import numpy as np
 import logging
+import shutil
 from src.lib.constants import MNIST_DIR
 
 class MNISTDatasetDownloader:
@@ -62,6 +63,16 @@ class MNISTDatasetDownloader:
             for record in train_records + test_records:
                 f.write(f"{record}\n")
 
+    def _cleanup_download(self):
+        """Remove mnist directory after Preparing is complete"""
+        mnist_download_dir = self.data_dir / 'mnist'
+        if mnist_download_dir.exists():
+            try:
+                shutil.rmtree(mnist_download_dir)
+                self.logger.info(f"Cleaned up temporary directory: {mnist_download_dir}")
+            except Exception as e:
+                self.logger.error(f"Failed to clean up directory {mnist_download_dir}: {str(e)}")
+
     def run(self):
         try:
             self._create_dirs()
@@ -77,6 +88,10 @@ class MNISTDatasetDownloader:
             
             self._create_documentation(train_records, test_records)
             self.logger.info(f"[MNIST] Complete - Train: {len(train_records):,}, Test: {len(test_records):,}")
+            
+            # Call cleanup
+            self._cleanup_download()
+            
             return True
 
         except Exception as e:
