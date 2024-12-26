@@ -1,0 +1,28 @@
+# Data directories
+data/raw/*
+data/processed/*
+data/logs/*
+!data/raw/.gitkeep 
+!data/processed/.gitkeep
+!data/logs/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
