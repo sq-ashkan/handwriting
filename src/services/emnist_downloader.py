@@ -4,8 +4,8 @@ from tqdm import tqdm
 from PIL import Image
 import numpy as np
 import logging
-
-EMNIST_DIR = Path("./data/raw/emnist")
+import shutil
+from src.lib.constants import EMNIST_DIR
 
 class EMNISTDatasetDownloader:
     def __init__(self):
@@ -39,7 +39,7 @@ class EMNISTDatasetDownloader:
 
     def _save_images(self, dataset):
         records = []
-        for idx, (image, label) in enumerate(tqdm(dataset, desc="Processing images")):
+        for idx, (image, label) in enumerate(tqdm(dataset, desc="Preparing images")):
             image_id = self._generate_iam_id()
             processed_image = self._process_image(image)
             
@@ -64,6 +64,16 @@ class EMNISTDatasetDownloader:
             for record in records:
                 f.write(f"{record}\n")
 
+    def _cleanup_download(self):
+        """Remove EMNIST directory after Preparing is complete"""
+        emnist_download_dir = self.data_dir / 'EMNIST'
+        if emnist_download_dir.exists():
+            try:
+                shutil.rmtree(emnist_download_dir)
+                logging.info(f"Cleaned up temporary directory: {emnist_download_dir}")
+            except Exception as e:
+                logging.error(f"Failed to clean up directory {emnist_download_dir}: {str(e)}")
+
     def run(self):
         try:
             self._create_dirs()
@@ -78,6 +88,9 @@ class EMNISTDatasetDownloader:
 
             records = self._save_images(dataset)
             self._create_documentation(records)
+            
+            # Clean up after successful Preparing
+            self._cleanup_download()
 
             logging.info("EMNIST dataset downloaded and processed successfully")
             return True
@@ -87,5 +100,7 @@ class EMNISTDatasetDownloader:
             return False
 
 if __name__ == "__main__":
+    from src.lib.utils import setup_logging
+    setup_logging()
     downloader = EMNISTDatasetDownloader()
-    downloader.run()
+    success = downloader.run()

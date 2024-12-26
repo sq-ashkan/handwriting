@@ -12,16 +12,16 @@ from src.lib.constants import IAM_DIR
 
 class IAMDatasetDownloader:
     def __init__(self):
-        """راه‌اندازی اولیه کلاس دانلودر"""
+        """Initialize the downloader class"""
         self.logger = logging.getLogger(__name__)
 
     def download_with_progress(self, url: str, save_path: Path) -> None:
         """
-        دانلود فایل با نمایش درصد پیشرفت
+        Download file with progress bar
         
         Args:
-            url: آدرس فایل
-            save_path: مسیر ذخیره‌سازی
+            url: File URL
+            save_path: Save location path
         """
         try:
             response = requests.get(url, stream=True)
@@ -44,7 +44,7 @@ class IAMDatasetDownloader:
 
     def download_dataset(self) -> Path:
         """
-        دانلود دیتاست از کگل با نمایش پیشرفت
+        Download dataset from Kaggle with progress tracking
         """
         self.logger.info("Starting IAM dataset download")
         try:
@@ -72,14 +72,14 @@ class IAMDatasetDownloader:
             
             self.logger.info(f"Moving files to: {IAM_DIR}")
             
-            # انتقال همه فایل‌های png به پوشه images
+            # Move all PNG files to images directory
             png_files = list(temp_path.glob('**/*.png'))
             with tqdm(total=len(png_files), desc="Moving image files") as pbar:
                 for img_file in png_files:
                     shutil.copy2(img_file, target_image_dir / img_file.name)
                     pbar.update(1)
             
-            # انتقال فایل txt مستندات
+            # Move documentation TXT file
             txt_files = list(temp_path.glob('**/*.txt'))
             if txt_files:
                 shutil.copy2(txt_files[0], IAM_DIR / 'documentation.txt')
@@ -116,10 +116,10 @@ class IAMDatasetDownloader:
 
     def run(self) -> bool:
         """
-        اجرای کامل فرایند دانلود
+        Run the complete download process
         
         Returns:
-            bool: نتیجه کلی
+            bool: Overall success status
         """
         try:
             create_directories()

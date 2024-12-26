@@ -4,7 +4,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 
-# اضافه کردن مسیرهای جدید
+# Adding new directory paths
 IAM_DIR = RAW_DIR / "iam_handwriting"
 EMNIST_DIR = RAW_DIR / "emnist"
 MNIST_DIR = RAW_DIR / "mnist"
