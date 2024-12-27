@@ -19,7 +19,7 @@ class EMNISTDatasetDownloader:
         self.image_dir.mkdir(parents=True, exist_ok=True)
 
     def _generate_iam_id(self):
-        writer_id = f"a{self.current_id:02d}"
+        writer_id = f"em-a{self.current_id:02d}"
         doc_id = f"{self.current_id:03d}u"
         image_id = f"{writer_id}-{doc_id}-00-00"
         self.current_id += 1

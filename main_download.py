@@ -1,50 +1,65 @@
 import sys
-import shutil
 import logging
 from pathlib import Path
 from src.lib.utils import setup_logging
+from src.lib.cache_manager import CacheManager
 from src.services.iam_downloader import IAMDatasetDownloader
 from src.services.emnist_downloader import EMNISTDatasetDownloader
 from src.services.mnist_downloader import MNISTDatasetDownloader
+from src.services.az_downloader import AZDatasetDownloader
+from src.services.chars74k_downloader import Chars74KDatasetDownloader
 from src.lib.constants import RAW_DIR
-
-def cleanup_pycache():
-    project_root = Path(__file__).parent
-    for pycache_dir in project_root.rglob("__pycache__"):
-        shutil.rmtree(pycache_dir)
 
 def main() -> bool:
     try:
+        # پاک‌سازی کش قبل از شروع
+        CacheManager.cleanup()
+        
+        # راه‌اندازی سیستم لاگ
         setup_logging()
         
-        logging.info("Starting IAM download")
-        iam_downloader = IAMDatasetDownloader()
-        iam_success = iam_downloader.run()
+        # تعریف دانلودرها
+        downloaders = {
+            "IAM": IAMDatasetDownloader(),
+            "EMNIST": EMNISTDatasetDownloader(),
+            "MNIST": MNISTDatasetDownloader(),
+            "A-Z": AZDatasetDownloader(),
+            "Chars74K": Chars74KDatasetDownloader()
+        }
         
-        logging.info("Starting EMNIST download")
-        emnist_downloader = EMNISTDatasetDownloader()
-        emnist_success = emnist_downloader.run()
+        success_status = {}
         
-        logging.info("Starting MNIST download")
-        mnist_downloader = MNISTDatasetDownloader()
-        mnist_success = mnist_downloader.run()
+        for name, downloader in downloaders.items():
+            logging.info(f"Starting {name} dataset download...")
+            try:
+                success_status[name] = downloader.run()
+                if success_status[name]:
+                    logging.info(f"{name} dataset successfully downloaded and processed")
+                else:
+                    logging.error(f"{name} dataset processing failed")
+            except Exception as e:
+                logging.error(f"Error with {name} dataset: {str(e)}")
+                success_status[name] = False
         
-        cleanup_pycache()
-        
-        all_success = iam_success and emnist_success and mnist_success
+        all_success = all(success_status.values())
         
         if all_success:
-            logging.info("All datasets downloaded successfully")
+            logging.info("All datasets successfully downloaded and processed")
         else:
-            logging.error("Failed to download some datasets")
-            
+            failed = [name for name, success in success_status.items() if not success]
+            logging.error(f"Failed datasets: {', '.join(failed)}")
+        
+        logging.info(f"\nDataset location: {RAW_DIR}")
+        for name, success in success_status.items():
+            status = "✓" if success else "✗"
+            logging.info(f"{status} {name}")
+        
         return all_success
         
     except Exception as e:
-        logging.error(f"General error: {str(e)}")
+        logging.error(f"Critical error: {str(e)}")
         return False
 
 if __name__ == "__main__":
     success = main()
-    print(f"\nDataset files location: {RAW_DIR}")
     sys.exit(0 if success else 1)

@@ -1,81 +1,77 @@
 import os
+import cv2
+import numpy as np
 from pathlib import Path
-from collections import defaultdict
-import pandas as pd
-from typing import Dict, List, Tuple
 
-class DatasetAnalyzer:
-    def __init__(self, data_path: Path):
-        """
-        Initialize the Dataset Analyzer class
-        Input: File path
-        """
-        self.data_path = data_path
-        self.word_info = defaultdict(int)
-        self.char_counts = defaultdict(int)
-        self.total_samples = 0
-        self.ok_samples = 0
-        self.error_samples = 0
-        
-    def read_data(self) -> None:
-        """
-        Read the file and perform initial processing
-        """
-        with open(self.data_path, 'r', encoding='utf-8') as f:
-            # Skip comment lines
-            lines = [l.strip() for l in f.readlines() if not l.startswith('#')]
-            
-        for line in lines:
-            if not line:
-                continue
-                
-            # Split the line into parts
-            parts = line.split()
-            if len(parts) < 9:
-                continue
-                
-            status = parts[1]  # Status: 'ok' or 'er'
-            word = parts[-1]   # The word itself
-            
-            # Count samples
-            self.total_samples += 1
-            if status == 'ok':
-                self.ok_samples += 1
-                # Count characters in correct samples
-                for char in word:
-                    self.char_counts[char] += 1
-            else:
-                self.error_samples += 1
-            
-            # Count word lengths
-            self.word_info[len(word)] += 1
-            
-    def print_stats(self) -> None:
-        """
-        Display overall dataset statistics
-        """
-        print("\n=== Overall Dataset Statistics ===")
-        print(f"Total samples: {self.total_samples:,}")
-        print(f"Correct samples: {self.ok_samples:,}")
-        print(f"Error samples: {self.error_samples:,}")
-        
-        print("\n=== Word Length Distribution ===")
-        for length, count in sorted(self.word_info.items()):
-            print(f"Words with length {length}: {count:,}")
-            
-        print("\n=== Top 10 Most Frequent Characters ===")
-        chars = sorted(self.char_counts.items(), key=lambda x: x[1], reverse=True)
-        for char, count in chars[:40]:
-            print(f"'{char}': {count:,}")
+def analyze_dataset(dataset_path):
+    """تحلیل یک دیتاست خاص و نمایش اطلاعات مهم آن"""
+    
+    results = {
+        'name': os.path.basename(dataset_path),
+        'doc_sample': None,
+        'image_stats': {
+            'count': 0,
+            'sizes': set(),
+            'formats': set(),
+            'min_gray': float('inf'),
+            'max_gray': -float('inf')
+        }
+    }
+    
+    # بررسی فایل documentation.txt
+    doc_path = os.path.join(dataset_path, 'documentation.txt')
+    if os.path.exists(doc_path):
+        with open(doc_path, 'r', encoding='utf-8') as f:
+            # نمونه 5 خط اول
+            results['doc_sample'] = ''.join([next(f) for _ in range(5)])
+    
+    # بررسی تصاویر
+    img_path = os.path.join(dataset_path, 'images')
+    if os.path.exists(img_path):
+        for img_file in os.listdir(img_path)[:100]:  # بررسی 100 تصویر اول
+            img_full_path = os.path.join(img_path, img_file)
+            try:
+                img = cv2.imread(img_full_path, cv2.IMREAD_GRAYSCALE)
+                if img is not None:
+                    results['image_stats']['count'] += 1
+                    results['image_stats']['sizes'].add(f"{img.shape[0]}x{img.shape[1]}")
+                    results['image_stats']['formats'].add(Path(img_file).suffix)
+                    results['image_stats']['min_gray'] = min(results['image_stats']['min_gray'], np.min(img))
+                    results['image_stats']['max_gray'] = max(results['image_stats']['max_gray'], np.max(img))
+            except Exception as e:
+                print(f"Error processing {img_file}: {e}")
+    
+    return results
 
 def main():
-    # File path
-    data_file = Path("data/raw/words_new.txt")
+    datasets = [
+        'data/raw/iam_handwriting',
+        'data/raw/emnist',
+        'data/raw/mnist',
+        'data/raw/az_handwritten',
+        'data/raw/chars74k'
+    ]
     
-    # Analyze the dataset
-    analyzer = DatasetAnalyzer(data_file)
-    analyzer.read_data()
-    analyzer.print_stats()
+    print("=== تحلیل دیتاست‌ها ===\n")
+    
+    for dataset_path in datasets:
+        if os.path.exists(dataset_path):
+            results = analyze_dataset(dataset_path)
+            
+            print(f"\n### دیتاست {results['name']} ###")
+            print("\n[نمونه documentation.txt]:")
+            print(results['doc_sample'] if results['doc_sample'] else "فایل documentation.txt یافت نشد")
+            
+            print("\n[آمار تصاویر]:")
+            stats = results['image_stats']
+            print(f"تعداد تصاویر بررسی شده: {stats['count']}")
+            print(f"سایزهای مختلف: {', '.join(stats['sizes'])}")
+            print(f"فرمت‌های موجود: {', '.join(stats['formats'])}")
+            print(f"محدوده مقادیر خاکستری: {stats['min_gray']} تا {stats['max_gray']}")
+            
+            print("\n" + "="*50)
+        else:
+            print(f"\nمسیر {dataset_path} یافت نشد!")
 
 if __name__ == "__main__":
     main()
