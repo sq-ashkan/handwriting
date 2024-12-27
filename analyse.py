@@ -45,7 +45,7 @@ def analyze_dataset(dataset_path):
 
 def main():
     datasets = [
-        'data/raw/iam_handwriting',
+        'data/raw/english_handwritten',
         'data/raw/emnist',
         'data/raw/mnist',
         'data/raw/az_handwritten',

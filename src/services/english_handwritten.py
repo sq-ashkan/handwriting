@@ -5,85 +5,79 @@ from pathlib import Path
 import kagglehub
 import shutil
 import requests
+import pandas as pd
+from PIL import Image
 from tqdm import tqdm
 
 from src.lib.utils import create_directories
-from src.lib.constants import IAM_DIR
+from src.lib.constants import ENGLISH_HANDWRITTEN_DIR
 
-class IAMDatasetDownloader:
+class EnglishHandwrittenDownloader:
     def __init__(self):
-        """Initialize the downloader class"""
         self.logger = logging.getLogger(__name__)
+        self.target_dir = ENGLISH_HANDWRITTEN_DIR
 
-    def download_with_progress(self, url: str, save_path: Path) -> None:
-        """
-        Download file with progress bar
-        
-        Args:
-            url: File URL
-            save_path: Save location path
-        """
+    def download_dataset(self) -> Path:
+        self.logger.info("Starting English Handwritten Characters dataset download")
         try:
-            response = requests.get(url, stream=True)
-            total_size = int(response.headers.get('content-length', 0))
-            
-            with open(save_path, 'wb') as file, tqdm(
-                desc=f"Downloading {save_path.name}",
-                total=total_size,
-                unit='B',
-                unit_scale=True,
-                unit_divisor=1024,
-            ) as pbar:
-                for data in response.iter_content(chunk_size=1024):
-                    size = file.write(data)
-                    pbar.update(size)
-                    
+            dataset_path = kagglehub.dataset_download(
+                "dhruvildave/english-handwritten-characters-dataset"
+            )
+            return Path(dataset_path)
         except Exception as e:
             self.logger.error(f"Download failed: {str(e)}")
             raise
 
-    def download_dataset(self) -> Path:
-        """
-        Download dataset from Kaggle with progress tracking
-        """
-        self.logger.info("Starting IAM dataset download")
+    def create_documentation(self, csv_path: Path, image_dir: Path) -> None:
         try:
-            with tqdm(total=100, desc="Downloading from Kaggle") as pbar:
-                dataset_path = kagglehub.dataset_download(
-                    "nibinv23/iam-handwriting-word-database"
-                )
-                pbar.update(100)
-                
-            dataset_path = Path(dataset_path)
-            self.logger.info(f"Dataset downloaded to: {dataset_path}")
-            return dataset_path
+            df = pd.read_csv(csv_path)
+            documentation_lines = []
             
+            for _, row in df.iterrows():
+                image_file = Path(row['image'])
+                img_path = image_dir / image_file.name
+                
+                if img_path.exists():
+                    with Image.open(img_path) as img:
+                        w, h = img.size
+                    
+                    # Add EH prefix to image_id
+                    img_id = f"EH_{image_file.stem}"
+                    line = f"{img_id} 1 255 1 0 0 {w} {h} {img_id} {row['label']}"
+                    documentation_lines.append(line)
+                    
+            with open(self.target_dir / 'documentation.txt', 'w') as f:
+                f.write('\n'.join(documentation_lines))
+                
         except Exception as e:
-            self.logger.error(f"Download failed: {str(e)}")
+            self.logger.error(f"Failed to create documentation: {e}")
             raise
 
     def move_to_raw(self, temp_path: Path) -> bool:
         try:
-            if not IAM_DIR.exists():
-                IAM_DIR.mkdir(parents=True)
+            if not self.target_dir.exists():
+                self.target_dir.mkdir(parents=True)
                 
-            target_image_dir = IAM_DIR / 'images'
+            target_image_dir = self.target_dir / 'images'
             target_image_dir.mkdir(exist_ok=True)
             
-            self.logger.info(f"Moving files to: {IAM_DIR}")
+            self.logger.info(f"Moving files to: {self.target_dir}")
             
-            # Move all PNG files to images directory
+            # Move PNG files
             png_files = list(temp_path.glob('**/*.png'))
             with tqdm(total=len(png_files), desc="Moving image files") as pbar:
                 for img_file in png_files:
                     shutil.copy2(img_file, target_image_dir / img_file.name)
                     pbar.update(1)
             
-            # Move documentation TXT file
-            txt_files = list(temp_path.glob('**/*.txt'))
-            if txt_files:
-                shutil.copy2(txt_files[0], IAM_DIR / 'documentation.txt')
-                
+            # Process CSV to documentation.txt
+            csv_files = list(temp_path.glob('**/*.csv'))
+            if csv_files:
+                self.create_documentation(csv_files[0], target_image_dir)
+            else:
+                self.logger.error("No CSV file found")
+                return False
+            
             return True
         except Exception as e:
             self.logger.error(f"File transfer failed: {str(e)}")
@@ -93,7 +87,7 @@ class IAMDatasetDownloader:
         try:
             self.logger.info("Verifying download")
             
-            images_dir = IAM_DIR / 'images'
+            images_dir = self.target_dir / 'images'
             if not images_dir.exists():
                 self.logger.error("Images directory not found")
                 return False
@@ -103,7 +97,7 @@ class IAMDatasetDownloader:
                 self.logger.error("No image files found")
                 return False
                 
-            if not (IAM_DIR / 'documentation.txt').exists():
+            if not (self.target_dir / 'documentation.txt').exists():
                 self.logger.error("Documentation file not found")
                 return False
                 
@@ -115,25 +109,15 @@ class IAMDatasetDownloader:
             return False
 
     def run(self) -> bool:
-        """
-        Run the complete download process
-        
-        Returns:
-            bool: Overall success status
-        """
         try:
             create_directories()
-            
             temp_path = self.download_dataset()
             if not self.move_to_raw(temp_path):
                 return False
-                
             if not self.verify_download():
                 return False
-                
             self.logger.info("Dataset download completed successfully")
             return True
-                
         except Exception as e:
             self.logger.error(f"Download process failed: {str(e)}")
             return False

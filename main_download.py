@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from src.lib.utils import setup_logging
 from src.lib.cache_manager import CacheManager
-from src.services.iam_downloader import IAMDatasetDownloader
+from src.services.english_handwritten import EnglishHandwrittenDownloader
 from src.services.emnist_downloader import EMNISTDatasetDownloader
 from src.services.mnist_downloader import MNISTDatasetDownloader
 from src.services.az_downloader import AZDatasetDownloader
@@ -20,7 +20,7 @@ def main() -> bool:
         
         # تعریف دانلودرها
         downloaders = {
-            "IAM": IAMDatasetDownloader(),
+            "EH": EnglishHandwrittenDownloader(),
             "EMNIST": EMNISTDatasetDownloader(),
             "MNIST": MNISTDatasetDownloader(),
             "A-Z": AZDatasetDownloader(),
