@@ -3,11 +3,11 @@ import logging
 from pathlib import Path
 from src.lib.utils import setup_logging
 from src.lib.cache_manager import CacheManager
-from src.services.english_handwritten import EnglishHandwrittenDownloader
-from src.services.emnist_downloader import EMNISTDatasetDownloader
-from src.services.mnist_downloader import MNISTDatasetDownloader
-from src.services.az_downloader import AZDatasetDownloader
-from src.services.chars74k_downloader import Chars74KDatasetDownloader
+from src.services.downloaders.english_handwritten import EnglishHandwrittenDownloader
+from src.services.downloaders.emnist_downloader import EMNISTDatasetDownloader
+from src.services.downloaders.mnist_downloader import MNISTDatasetDownloader
+from src.services.downloaders.az_downloader import AZDatasetDownloader
+from src.services.downloaders.chars74k_downloader import Chars74KDatasetDownloader
 from src.lib.constants import RAW_DIR
 
 def main() -> bool:
