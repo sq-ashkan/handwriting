@@ -1,4 +1,3 @@
-# src/lib/cache_manager.py
 import os
 import sys
 import shutil
@@ -53,6 +52,20 @@ class CacheManager:
             # پاک‌سازی .pyo
             for pyo_file in project_root.rglob("*.pyo"):
                 os.remove(pyo_file)
+                
+            # پاک‌سازی __init__.py در مسیرهای خاص
+            init_paths = [
+                project_root / "src" / "services" / "processors" / "__init__.py",
+                project_root / "src" / "lib" / "__init__.py"
+            ]
+            
+            for init_path in init_paths:
+                if init_path.exists():
+                    try:
+                        os.remove(init_path)
+                        logging.info(f"Removed {init_path}")
+                    except Exception as e:
+                        logging.warning(f"Could not remove {init_path}: {e}")
                 
         except Exception as e:
             logging.warning(f"Error cleaning Python cache: {e}")
