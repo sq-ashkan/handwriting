@@ -15,7 +15,9 @@ import hashlib
 import magic
 import chardet
 from scipy import ndimage
-from skimage import morphology, measure, filters, feature
+
+import skimage
+from skimage import io, morphology, measure, filters, feature
 
 @dataclass
 class ImageMetrics:
@@ -187,7 +189,7 @@ class ComprehensiveAnalyzer:
             file_format=image_path.suffix,
             file_size=file_stats.st_size,
             actual_format=real_format,
-            color_depth=pil_img.bits,
+            color_depth=pil_img.mode == 'RGB' and 24 or 8,  # 24 for RGB, 8 for grayscale
             dpi=dpi,
             
             mean_intensity=float(np.mean(cv_img)),
@@ -403,11 +405,12 @@ class ComprehensiveAnalyzer:
     def _check_image_standards(self, image_path: Path) -> Dict[str, bool]:
         """Check if image meets all defined standards"""
         img = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+        pil_img = Image.open(image_path)
         return {
             'size_ok': img.shape == self.standards['image']['size'],
             'format_ok': image_path.suffix == self.standards['image']['format'],
             'size_under_limit': image_path.stat().st_size <= self.standards['image']['max_file_size'],
-            'bit_depth_ok': Image.open(image_path).bits == self.standards['image']['bit_depth'],
+            'bit_depth_ok': pil_img.mode == 'L' and 8 or 24 == self.standards['image']['bit_depth'],
             'contrast_ok': (np.max(img) - np.min(img)) / 255.0 >= self.standards['image']['min_contrast'],
             'noise_ok': np.std(cv2.subtract(img, cv2.GaussianBlur(img, (5,5), 0))) <= self.standards['image']['max_noise']
         }
