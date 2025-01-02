@@ -1,0 +1,69 @@
+{
+  "analysis_date": "2025-01-02T23:05:48.478059",
+  "datasets": {
+    "EH": {
+      "error": "name 'skimage' is not defined"
+    },
+    "EMNIST": {
+      "error": "name 'skimage' is not defined"
+    },
+    "MNIST": {
+      "error": "name 'skimage' is not defined"
+    },
+    "AZ": {
+      "error": "name 'skimage' is not defined"
+    },
+    "Chars74k": {
+      "error": "name 'skimage' is not defined"
+    }
+  },
+  "compatibility_matrix": {
+    "EH": {
+      "EMNIST": {
+        "error": "One or both datasets have analysis errors"
+      },
+      "MNIST": {
+        "error": "One or both datasets have analysis errors"
+      },
+      "AZ": {
+        "error": "One or both datasets have analysis errors"
+      },
+      "Chars74k": {
+        "error": "One or both datasets have analysis errors"
+      }
+    },
+    "EMNIST": {
+      "MNIST": {
+        "error": "One or both datasets have analysis errors"
+      },
+      "AZ": {
+        "error": "One or both datasets have analysis errors"
+      },
+      "Chars74k": {
+        "error": "One or both datasets have analysis errors"
+      }
+    },
+    "MNIST": {
+      "AZ": {
+        "error": "One or both datasets have analysis errors"
+      },
+      "Chars74k": {
+        "error": "One or both datasets have analysis errors"
+      }
+    },
+    "AZ": {
+      "Chars74k": {
+        "error": "One or both datasets have analysis errors"
+      }
+    },
+    "Chars74k": {}
+  },
+  "global_recommendations": [],
+  "execution_summary": {
+    "start_time": "2025-01-02T23:05:48.478059",
+    "end_time": "2025-01-02T23:06:02.645901",
+    "duration_seconds": 14.167842,
+    "datasets_analyzed": 5,
+    "successful_analyses": 0
+  }
+}
