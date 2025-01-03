@@ -119,27 +119,29 @@ class MNISTProcessor:
         return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
     def _normalize_documentation(self) -> None:
-        """Normalize documentation to standard IAM format."""
-        doc_path = self.temp_path / "documentation.txt"
-        normalized_path = self.temp_path / "normalized_documentation.txt"
-        
-        with open(doc_path, 'r') as f, open(normalized_path, 'w') as out:
-            for line in f:
-                if line.startswith('#') or not line.strip():
-                    continue
+            """Normalize documentation to simplified format (filename label)."""
+            doc_path = self.temp_path / "documentation.txt"
+            normalized_path = self.temp_path / "normalized_documentation.txt"
+            
+            skip_lines = 4  # Number of header lines to skip
+            
+            with open(doc_path, 'r') as f, open(normalized_path, 'w') as out:
+                # Skip header lines
+                for _ in range(skip_lines):
+                    next(f, None)
                     
-                parts = line.strip().split()
-                if len(parts) >= 2:
-                    filename = parts[0]
-                    label = parts[1]
+                for line in f:
+                    if not line.strip() or line.startswith('#'):
+                        continue
                     
-                    normalized_filename = f"EH_{filename}"
-                    normalized_line = f"{normalized_filename} 1 255 1 0 0 27 27 MNIST {label}\n"
-                    out.write(normalized_line)
+                    parts = line.strip().split()
+                    if len(parts) >= 2:
+                        filename = parts[0]        # First column (filename)
+                        label = parts[-1]          # Last column (label)
+                        out.write(f"{filename} {label}\n")
 
-        normalized_path.replace(doc_path)
-        self.logger.info("Documentation normalized to IAM format")
-
+            normalized_path.replace(doc_path)
+            self.logger.info("Documentation normalized to simplified format")
     def _copy_dataset(self) -> None:
         """Copy dataset files to temp directory."""
         if self.source_path.exists():

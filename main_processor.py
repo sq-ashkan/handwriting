@@ -1,7 +1,6 @@
 import logging
 from src.lib.cache_manager import CacheManager 
 from src.services.processors.english_handwritten import EnglishHandwrittenProcessor
-from src.services.processors.emnist_processor import EMNISTProcessor
 from src.services.processors.mnist_processor import MNISTProcessor
 from src.services.processors.az_processor import AZProcessor
 from src.services.processors.chars74k_processor import Chars74KProcessor
@@ -19,11 +18,10 @@ def main() -> bool:
         setup_basic_logging()
         
         processors = {
-            "EH": EnglishHandwrittenProcessor(),
-            "EMNIST": EMNISTProcessor(),
+            # "EH": EnglishHandwrittenProcessor(),
             "MNIST": MNISTProcessor(),
-            "AZ": AZProcessor(),
-            "Chars74K": Chars74KProcessor()
+            # "AZ": AZProcessor(),
+            # "Chars74K": Chars74KProcessor()
         }
         
         success = True

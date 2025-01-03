@@ -18,13 +18,11 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 │   ├── services/                       # Main services
 │   │   ├── downloaders/                # Dataset downloaders
 │   │   │   ├── english_handwritten.py  # English Handwritten Downloader ✓
-│   │   │   ├── emnist_downloader.py    # EMNIST Downloader ✓
 │   │   │   ├── mnist_downloader.py     # MNIST Downloader ✓
 │   │   │   ├── az_downloader.py        # A-Z Downloader ✓
 │   │   │   └── chars74k_downloader.py  # Chars74K Downloader ✓
 │   │   ├── processors/                 # Data processors
 │   │   │   ├── english_handwritten.py
-│   │   │   ├── emnist_processor.py
 │   │   │   ├── mnist_processor.py
 │   │   │   ├── az_processor.py
 │   │   │   └── chars74k_processor.py
@@ -42,9 +40,6 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 │   │   ├── english_handwritten/        # English Handwritten dataset
 │   │   │   ├── images/                 # Standardized images
 │   │   │   └── documentation.txt       # Standard format documentation
-│   │   ├── emnist/                     # EMNIST dataset
-│   │   │   ├── images/                 # Standardized images
-│   │   │   └── documentation.txt       # Standard format documentation
 │   │   ├── mnist/                      # MNIST dataset
 │   │   │   ├── images/                 # Standardized images
 │   │   │   └── documentation.txt       # Standard format documentation
@@ -57,9 +52,6 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 │   ├── processed/                      # Processed data
 │   ├── temp/                           # Temporary data
 │   │   ├── EH/                         # Temporary English Handwritten data
-│   │   │   ├── images/    
-│   │   │   └── documentation.txt
-│   │   ├── EMNIST/                     # Temporary EMNIST data
 │   │   │   ├── images/    
 │   │   │   └── documentation.txt
 │   │   ├── MNIST/                      # Temporary MNIST data
