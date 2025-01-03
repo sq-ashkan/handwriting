@@ -85,11 +85,41 @@ class CacheManager:
 
     @staticmethod
     def cleanup():
+
         """اجرای تمام عملیات پاک‌سازی"""
         try:
             CacheManager.cleanup_python_cache()
             CacheManager.cleanup_temp()
             CacheManager.cleanup_interrupted_downloads()
+            CacheManager.reset_sys_modules()
+            logging.info("Cache cleanup completed successfully")
+            return True
+        except Exception as e:
+            logging.error(f"Cache cleanup failed: {e}")
+            return False
+    @staticmethod
+    def cleanup_data_cache():
+        """Delete the /data/cache directory from the project root"""
+        try:
+            project_root = Path(__file__).parent.parent.parent
+            cache_dir = project_root / "data" / "cache"
+            
+            if cache_dir.exists() and cache_dir.is_dir():
+                shutil.rmtree(cache_dir)
+                logging.info(f"Deleted cache directory: {cache_dir}")
+            else:
+                logging.info(f"Cache directory not found: {cache_dir}")
+        except Exception as e:
+            logging.warning(f"Error deleting cache directory: {e}")
+
+    @staticmethod
+    def cleanup():
+        """Run all cleanup operations"""
+        try:
+            CacheManager.cleanup_python_cache()
+            CacheManager.cleanup_temp()
+            CacheManager.cleanup_interrupted_downloads()
+            CacheManager.cleanup_data_cache()  # Add this line
             CacheManager.reset_sys_modules()
             logging.info("Cache cleanup completed successfully")
             return True

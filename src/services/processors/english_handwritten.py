@@ -1,257 +1,267 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import List, Optional
 import cv2
 import numpy as np
+import torch
+import torch.nn.functional as F
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+import multiprocessing as mp
 from tqdm import tqdm
 
 class EnglishHandwrittenProcessor:
-    """Processor for English handwritten character images."""
-    
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.project_root = Path(__file__).parent.parent.parent.parent
         self.source_path = self.project_root / "data" / "raw" / "english_handwritten"
         self.temp_path = self.project_root / "data" / "temp" / "EH"
         self.target_size = (27, 27)
+        self.target_ratio = (0.6, 0.7)
+        self.device = torch.device("mps")
+        self.num_workers = min(mp.cpu_count() - 1, 16)
+        self.chunk_size = 256
+        self.cache_dir = self.project_root / "data" / "cache" / "EH"
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         
     def process(self) -> bool:
-        """Main processing pipeline for the English handwritten dataset."""
         try:
             self.logger.info("Starting English handwritten text processing...")
-            
-            # Create temp directory if it doesn't exist
             self.temp_path.mkdir(parents=True, exist_ok=True)
             
             if not self.source_path.exists():
                 self.logger.error(f"Source dataset not found at {self.source_path}")
                 return False
-                
-            # Copy dataset to temp location
-            self._copy_dataset()
-            self.logger.info(f"Dataset copied to {self.temp_path}")
+
+            progress = 0
+            self._parallel_copy_dataset()
+            progress += 25
+            self.logger.info(f"Processing progress: {progress}%")
             
-            # Process all images
             image_files = list((self.temp_path / "images").glob("*.png"))
-            total_files = len(image_files)
+            chunks = [image_files[i:i + self.chunk_size] for i in range(0, len(image_files), self.chunk_size)]
             
-            for idx, img_path in enumerate(tqdm(image_files, desc="Processing images")):
-                try:
-                    # Read image
-                    image = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
-                    if image is None:
-                        self.logger.warning(f"Failed to read image: {img_path}")
-                        continue
-                        
-                    # Process image
-                    processed = self._process_single_image(image)
-                    
-                    # Save processed image
-                    cv2.imwrite(str(img_path), processed)
-                    
-                    # Log progress
-                    progress = (idx + 1) / total_files * 100
-                    self.logger.info(f"Processed {img_path.name} ({progress:.2f}%)")
-                    
-                except Exception as e:
-                    self.logger.error(f"Error processing {img_path}: {str(e)}")
-                    continue
-                    
+            processed_chunks = 0
+            total_chunks = len(chunks)
+            
+            with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+                futures = []
+                for chunk in chunks:
+                    future = executor.submit(self._process_chunk, chunk)
+                    futures.append(future)
+                
+                for future in tqdm(futures, total=len(futures), desc="Processing image chunks"):
+                    future.result()
+                    processed_chunks += 1
+                    current_progress = 25 + (processed_chunks / total_chunks * 50)
+                    self.logger.info(f"Processing progress: {int(current_progress)}%")
+            
+            self._validate_sample_image()
+            self.logger.info("Processing progress: 100%")
+            
             return True
             
         except Exception as e:
-            self.logger.error(f"Error in English handwritten processing: {str(e)}")
+            self.logger.error(f"Error in processing: {str(e)}")
             return False
             
-    def _process_single_image(self, image: np.ndarray) -> np.ndarray:
-        """Process a single character image through all steps.
-        
-        Args:
-            image: Input grayscale image
+    def _process_chunk(self, image_paths: List[Path]) -> None:
+        try:
+            processed_images = []
+            valid_paths = []
             
-        Returns:
-            Processed image
-        """
-        # Remove noise and normalize brightness
-        image = self._normalize_brightness(image)
+            for img_path in image_paths:
+                try:
+                    cache_path = self.cache_dir / img_path.name
+                    if cache_path.exists():
+                        shutil.copy2(cache_path, img_path)
+                        continue
+                    
+                    image = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
+                    if image is not None:
+                        processed = self._process_single_image(image)
+                        if processed is not None:
+                            processed_images.append(processed)
+                            valid_paths.append(img_path)
+                            cv2.imwrite(str(cache_path), processed)
+                except Exception as e:
+                    self.logger.warning(f"Error processing {img_path}: {str(e)}")
+                    continue
+                    
+            if not processed_images:
+                return
+                
+            batch = torch.tensor(np.stack(processed_images)).to(self.device)
+            processed_batch = self._process_tensor_batch(batch)
+            
+            for img, path in zip(processed_batch.cpu().numpy(), valid_paths):
+                cv2.imwrite(str(path), img)
+                
+        except Exception as e:
+            self.logger.error(f"Error in chunk processing: {str(e)}")
+
+    def _process_single_image(self, image: np.ndarray) -> Optional[np.ndarray]:
+        try:
+            image = cv2.resize(image, self.target_size, interpolation=cv2.INTER_AREA)
+            image = image.astype(np.float32) / 255.0
+            
+            image = cv2.GaussianBlur(image, (3, 3), 0.5)
+            
+            image_uint8 = (image * 255).astype(np.uint8)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4))
+            image = clahe.apply(image_uint8).astype(np.float32) / 255.0
+            
+            image_uint8 = (image * 255).astype(np.uint8)
+            binary = cv2.adaptiveThreshold(
+                image_uint8, 255,
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY,
+                blockSize=11,
+                C=2
+            )
+            
+            binary = self._clean_artifacts(binary)
+            processed = self._center_and_adjust_ratio(binary)
+            
+            if processed is None:
+                return None
+                
+            return self._ensure_margins(processed)
+            
+        except Exception as e:
+            self.logger.warning(f"Error in single image processing: {str(e)}")
+            return None
+
+    def _clean_artifacts(self, image: np.ndarray) -> np.ndarray:
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(image)
+        min_size = 5
+        for i in range(1, num_labels):
+            if stats[i, cv2.CC_STAT_AREA] < min_size:
+                image[labels == i] = 0
         
-        # Remove margins and center character
-        image = self._remove_margins(image)
-        
-        # Center the character
-        image = self._center_character(image)
-        
-        # Normalize stroke width
-        image = self._normalize_stroke_width(image)
-        
-        # Resize to target size
-        image = cv2.resize(image, self.target_size, interpolation=cv2.INTER_AREA)
-        
+        kernel = np.ones((2, 2), np.uint8)
+        image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
         return image
-        
-    def _normalize_brightness(self, image: np.ndarray) -> np.ndarray:
-        """Normalize image brightness and remove noise.
-        
-        Args:
-            image: Input grayscale image
+
+    def _center_and_adjust_ratio(self, image: np.ndarray) -> Optional[np.ndarray]:
+        coords = cv2.findNonZero(image)
+        if coords is None:
+            return None
             
-        Returns:
-            Normalized image
-        """
-        # Apply adaptive thresholding
-        thresh = cv2.adaptiveThreshold(
-            image,
-            255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY_INV,
-            11,
-            2
-        )
+        x, y, w, h = cv2.boundingRect(coords)
+        current_ratio = (w * h) / (self.target_size[0] * self.target_size[1])
         
-        # Remove small noise
-        kernel = np.ones((2,2), np.uint8)
-        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-        
-        return thresh
-        
-    def _remove_margins(self, image: np.ndarray) -> np.ndarray:
-        """Remove excess margins around the character.
-        
-        Args:
-            image: Binary image
+        if current_ratio < self.target_ratio[0]:
+            scale = np.sqrt(self.target_ratio[0] / current_ratio)
+        elif current_ratio > self.target_ratio[1]:
+            scale = np.sqrt(self.target_ratio[1] / current_ratio)
+        else:
+            scale = 1.0
             
-        Returns:
-            Image with margins removed
-        """
-        # Find contours
-        contours, _ = cv2.findContours(
-            image,
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE
-        )
+        new_w = int(w * scale)
+        new_h = int(h * scale)
         
-        if not contours:
+        if new_w > self.target_size[0] - 4 or new_h > self.target_size[1] - 4:
+            scale = min((self.target_size[0] - 4) / w, (self.target_size[1] - 4) / h)
+            new_w = int(w * scale)
+            new_h = int(h * scale)
+        
+        char_img = image[y:y+h, x:x+w]
+        char_img = cv2.resize(char_img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        
+        result = np.zeros(self.target_size, dtype=np.uint8)
+        x_offset = (self.target_size[0] - new_w) // 2
+        y_offset = (self.target_size[1] - new_h) // 2
+        result[y_offset:y_offset+new_h, x_offset:x_offset+new_w] = char_img
+        
+        return result
+
+    def _ensure_margins(self, image: np.ndarray) -> np.ndarray:
+        min_margin = 2
+        coords = cv2.findNonZero(image)
+        if coords is None:
             return image
             
-        # Get the largest contour
-        largest_contour = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(coords)
         
-        # Get bounding box
-        x, y, w, h = cv2.boundingRect(largest_contour)
+        if x < min_margin or y < min_margin or \
+           x + w > image.shape[1] - min_margin or \
+           y + h > image.shape[0] - min_margin:
+            new_image = np.zeros_like(image)
+            new_w = min(w, image.shape[1] - 2*min_margin)
+            new_h = min(h, image.shape[0] - 2*min_margin)
+            char_img = image[y:y+h, x:x+w]
+            char_img = cv2.resize(char_img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            x_offset = (image.shape[1] - new_w) // 2
+            y_offset = (image.shape[0] - new_h) // 2
+            new_image[y_offset:y_offset+new_h, x_offset:x_offset+new_w] = char_img
+            return new_image
         
-        # Add small padding
-        padding = 2
-        x = max(0, x - padding)
-        y = max(0, y - padding)
-        w = min(image.shape[1] - x, w + 2*padding)
-        h = min(image.shape[0] - y, h + 2*padding)
-        
-        # Crop image
-        return image[y:y+h, x:x+w]
-        
-    def _center_character(self, image: np.ndarray) -> np.ndarray:
-        """Center the character in the image.
-        
-        Args:
-            image: Binary image
+        return image
+
+    @torch.no_grad()
+    def _process_tensor_batch(self, batch: torch.Tensor) -> torch.Tensor:
+        try:
+            kernel = torch.ones((2, 2), device=self.device)
+            batch = F.conv2d(
+                batch.float().unsqueeze(1),
+                kernel.unsqueeze(0).unsqueeze(0),
+                padding=1
+            ).squeeze(1)
+            return (batch > 0).byte() * 255
+        except Exception as e:
+            self.logger.error(f"Error in tensor batch processing: {str(e)}")
+            return batch.byte()
+
+    def _validate_sample_image(self) -> None:
+        try:
+            sample_path = next((self.temp_path / "images").glob("*.png"))
+            image = cv2.imread(str(sample_path), cv2.IMREAD_GRAYSCALE)
             
-        Returns:
-            Centered image
-        """
-        # Get image dimensions
-        h, w = image.shape
-        size = max(h, w) + 10  # Add padding
-        
-        # Create square background
-        background = np.zeros((size, size), dtype=np.uint8)
-        
-        # Calculate position to paste
-        x_offset = (size - w) // 2
-        y_offset = (size - h) // 2
-        
-        # Paste original image
-        background[y_offset:y_offset+h, x_offset:x_offset+w] = image
-        
-        return background
-        
-    def _normalize_stroke_width(self, image: np.ndarray) -> np.ndarray:
-        """Normalize the stroke width of the character.
-        
-        Args:
-            image: Binary image
+            assert image.shape == self.target_size, f"Invalid dimensions: {image.shape}"
             
-        Returns:
-            Image with normalized stroke width
-        """
-        # Apply slight dilation to ensure consistent stroke width
-        kernel = np.ones((2,2), np.uint8)
-        dilated = cv2.dilate(image, kernel, iterations=1)
-        
-        return dilated
-        
-    def _copy_dataset(self) -> None:
-        """Copy dataset files to temp directory."""
-        if self.source_path.exists():
-            # Copy entire directory tree
-            shutil.copytree(
-                self.source_path, 
-                self.temp_path, 
-                dirs_exist_ok=True
-            )
-            self.logger.info(f"Copied dataset to {self.temp_path}")
-        else:
+            coords = cv2.findNonZero(image)
+            x, y, w, h = cv2.boundingRect(coords)
+            ratio = (w * h) / (image.shape[0] * image.shape[1])
+            assert self.target_ratio[0] <= ratio <= self.target_ratio[1], \
+                   f"Invalid occupation ratio: {ratio}"
+            
+            min_margin = 2
+            assert x >= min_margin and y >= min_margin, "Insufficient margins"
+            assert x + w <= image.shape[1] - min_margin, "Insufficient margins"
+            assert y + h <= image.shape[0] - min_margin, "Insufficient margins"
+            
+            self.logger.info("Sample image validation successful")
+        except Exception as e:
+            self.logger.error(f"Sample validation failed: {str(e)}")
+
+    def _parallel_copy_dataset(self) -> None:
+        if not self.source_path.exists():
             raise FileNotFoundError(f"Source dataset not found at {self.source_path}")
-            
-# Tests
-def test_processor():
-    """Test the EnglishHandwrittenProcessor class."""
-    import pytest
-    import tempfile
-    import shutil
-    
-    # Create temporary test directory
-    test_dir = Path(tempfile.mkdtemp())
-    
-    try:
-        # Create test image
-        img_dir = test_dir / "data" / "raw" / "english_handwritten" / "images"
-        img_dir.mkdir(parents=True)
         
-        # Create test image (white background with black character)
-        test_image = np.ones((100, 100), dtype=np.uint8) * 255
-        cv2.rectangle(test_image, (40, 30), (60, 70), 0, -1)  # Draw black rectangle
+        def copy_file(src_dest):
+            src, dest = src_dest
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
         
-        # Save test image
-        cv2.imwrite(str(img_dir / "test.png"), test_image)
+        source_files = list(self.source_path.rglob("*"))
+        copy_pairs = [
+            (src, self.temp_path / src.relative_to(self.source_path))
+            for src in source_files if src.is_file()
+        ]
         
-        # Initialize processor
-        processor = EnglishHandwrittenProcessor()
-        processor.project_root = test_dir
-        processor.source_path = test_dir / "data" / "raw" / "english_handwritten"
-        processor.temp_path = test_dir / "data" / "temp" / "EH"
-        
-        # Run processing
-        assert processor.process() == True
-        
-        # Check if processed image exists
-        processed_path = processor.temp_path / "images" / "test.png"
-        assert processed_path.exists()
-        
-        # Load processed image and verify size
-        processed_img = cv2.imread(str(processed_path), cv2.IMREAD_GRAYSCALE)
-        assert processed_img.shape == (27, 27)
-        
-    finally:
-        # Cleanup
-        shutil.rmtree(test_dir)
-        
+        with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            list(tqdm(
+                executor.map(copy_file, copy_pairs),
+                total=len(copy_pairs),
+                desc="Copying dataset"
+            ))
+
 if __name__ == "__main__":
-    # Configure logging
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
-    # Run tests
-    test_processor()
+    processor = EnglishHandwrittenProcessor()
+    processor.process()

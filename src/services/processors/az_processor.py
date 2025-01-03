@@ -20,8 +20,6 @@ class AZProcessor:
         normalized_path = self.temp_path / "normalized_documentation.txt"
         
         with open(doc_path, 'r') as f, open(normalized_path, 'w') as out:
-            out.write("# IAM Format: filename label grayscale components x y width height tag transcription\n\n")
-            
             for line in f:
                 if line.startswith('#') or not line.strip():
                     continue

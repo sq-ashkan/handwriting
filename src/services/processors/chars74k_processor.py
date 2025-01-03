@@ -12,16 +12,15 @@ class Chars74KProcessor:
         self.project_root = Path(__file__).parent.parent.parent.parent
         self.source_path = self.project_root / "data" / "raw" / "chars74k"
         self.temp_path = self.project_root / "data" / "temp" / "Chars74K"
+
     def _normalize_documentation(self) -> None:
         doc_path = self.temp_path / "documentation.txt"
         
         with open(doc_path, 'w') as out:
-            out.write("# IAM Format: filename label grayscale components x y width height tag transcription\n\n")
-            
             image_files = list((self.temp_path / "images").glob("*.png"))
             for img_path in image_files:
                 filename = img_path.stem
-                label = filename.split('_')[0]  # استخراج لیبل از نام فایل
+                label = filename.split('_')[0]  # Extract label from filename
                 normalized_line = f"EH_{filename} 1 255 1 0 0 27 27 CHARS74K {label}\n"
                 out.write(normalized_line)
 
@@ -67,6 +66,12 @@ class Chars74KProcessor:
 
     def _process_single_image(self, image: np.ndarray) -> np.ndarray:
         """Process single Chars74K image through enhancement pipeline."""
+        # Remove border artifacts
+        border = 2
+        h, w = image.shape
+        image = image[border:h-border, border:w-border]
+        image = cv2.resize(image, (27, 27))
+
         # Normalize brightness
         image = self._normalize_brightness(image)
         
@@ -78,6 +83,9 @@ class Chars74KProcessor:
         
         # Normalize stroke width
         image = self._normalize_stroke(image)
+
+        # Invert colors (black to white and vice versa)
+        image = cv2.bitwise_not(image)
         
         return image
 
