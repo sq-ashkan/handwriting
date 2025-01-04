@@ -18,9 +18,9 @@ def main() -> bool:
         setup_basic_logging()
         
         processors = {
-            # "EH": EnglishHandwrittenProcessor(),
-            # "MNIST": MNISTProcessor(),
-            # "AZ": AZProcessor(),
+            "EH": EnglishHandwrittenProcessor(),
+            "MNIST": MNISTProcessor(),
+            "AZ": AZProcessor(),
             "Chars74K": Chars74KProcessor()
         }
         
