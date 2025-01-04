@@ -7,6 +7,7 @@ data/logs/*
 !data/logs/.gitkeep
 data/temp
 data/cache
+data/*
 
 
 # Python
@@ -45,3 +46,9 @@ Thumbs.db
 analyse_result_before.json
 analyse.json
 analyse_result.json
+.DS_Store
+data/.DS_Store
+.DS_Store
+data/.DS_Store
+.DS_Store
+.DS_Store
