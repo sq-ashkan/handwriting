@@ -14,17 +14,29 @@ class Chars74KProcessor:
         self.temp_path = self.project_root / "data" / "temp" / "Chars74K"
 
     def _normalize_documentation(self) -> None:
+        """Normalize documentation to simplified format (filename label)."""
         doc_path = self.temp_path / "documentation.txt"
+        normalized_path = self.temp_path / "normalized_documentation.txt"
         
-        with open(doc_path, 'w') as out:
-            image_files = list((self.temp_path / "images").glob("*.png"))
-            for img_path in image_files:
-                filename = img_path.stem
-                label = filename.split('_')[0]  # Extract label from filename
-                normalized_line = f"EH_{filename} 1 255 1 0 0 27 27 CHARS74K {label}\n"
-                out.write(normalized_line)
+        skip_lines = 3  # Number of header lines to skip
+        
+        with open(doc_path, 'r') as f, open(normalized_path, 'w') as out:
+            # Skip header lines
+            for _ in range(skip_lines):
+                next(f, None)
+                
+            for line in f:
+                if line.startswith('#') or not line.strip():
+                    continue
+                
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    filename = parts[0]        # First column (filename)
+                    label = parts[-1]          # Last column (label)
+                    out.write(f"{filename} {label}\n")
 
-        self.logger.info("Documentation created in IAM format")
+        normalized_path.replace(doc_path)
+        self.logger.info("Documentation normalized to simplified format")
         
     def process(self) -> bool:
         try:
@@ -50,9 +62,6 @@ class Chars74KProcessor:
                     processed = self._process_single_image(image)
                     cv2.imwrite(str(img_path), processed)
                     
-                    progress = (idx + 1) / total_files * 100
-                    self.logger.debug(f"Processed {img_path.name} ({progress:.2f}%)")
-                    
                 except Exception as e:
                     self.logger.error(f"Error processing {img_path}: {str(e)}")
                     continue
@@ -65,80 +74,8 @@ class Chars74KProcessor:
             return False
 
     def _process_single_image(self, image: np.ndarray) -> np.ndarray:
-        """Process single Chars74K image through enhancement pipeline."""
-        # Remove border artifacts
-        border = 2
-        h, w = image.shape
-        image = image[border:h-border, border:w-border]
-        image = cv2.resize(image, (27, 27))
-
-        # Normalize brightness
-        image = self._normalize_brightness(image)
-        
-        # Reduce noise
-        image = self._reduce_noise(image)
-        
-        # Center character
-        image = self._center_character(image)
-        
-        # Normalize stroke width
-        image = self._normalize_stroke(image)
-
-        # Invert colors (black to white and vice versa)
-        image = cv2.bitwise_not(image)
-        
-        return image
-
-    def _normalize_brightness(self, image: np.ndarray) -> np.ndarray:
-        """Normalize image brightness using adaptive histogram equalization."""
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-        return clahe.apply(image)
-
-    def _reduce_noise(self, image: np.ndarray) -> np.ndarray:
-        """Remove noise while preserving character edges."""
-        # Non-local means denoising for better edge preservation
-        denoised = cv2.fastNlMeansDenoising(image, None, h=10, templateWindowSize=7, searchWindowSize=21)
-        
-        # Apply Otsu's thresholding
-        _, binary = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
-        return binary
-
-    def _center_character(self, image: np.ndarray) -> np.ndarray:
-        """Center character using connected component analysis."""
-        # Find all connected components
-        _, labels, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
-        
-        if len(stats) < 2:  # No character found
-            return image
-            
-        # Get largest component (excluding background)
-        largest_label = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-        
-        # Get component centroid
-        cy, cx = map(int, centroids[largest_label])
-        
-        # Calculate shift needed
-        rows, cols = image.shape
-        shift_x = (cols // 2) - cx
-        shift_y = (rows // 2) - cy
-        
-        # Create transformation matrix
-        M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
-        
-        return cv2.warpAffine(image, M, (cols, rows))
-
-    def _normalize_stroke(self, image: np.ndarray) -> np.ndarray:
-        """Normalize stroke width using morphological operations."""
-        # Estimate stroke width using distance transform
-        dist = cv2.distanceTransform(image, cv2.DIST_L2, 5)
-        avg_stroke = int(np.mean(dist[dist > 0]))
-        
-        # Create kernel based on estimated stroke width
-        kernel_size = max(2, avg_stroke // 2)
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
-        
-        return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+        """Process single Chars74K image by inverting colors."""
+        return cv2.bitwise_not(image)
 
     def _copy_dataset(self) -> None:
         """Copy dataset to temp directory."""
@@ -158,18 +95,10 @@ def test_processor():
         img_dir = test_dir / "data" / "raw" / "chars74k" / "images"
         img_dir.mkdir(parents=True)
         
-        # Create test image with varied stroke width
+        # Create test image
         test_image = np.zeros((100, 100), dtype=np.uint8)
-        cv2.putText(test_image, "R", (25, 75), cv2.FONT_HERSHEY_COMPLEX, 2, 255, 3)
-        cv2.putText(test_image, "R", (26, 76), cv2.FONT_HERSHEY_COMPLEX, 2, 255, 1)
-        
-        # Add varying brightness and noise
-        noise = np.random.normal(0, 30, test_image.shape).astype(np.uint8)
-        gradient = np.linspace(0, 50, 100).reshape(-1, 1)
-        noisy_image = cv2.add(test_image, noise)
-        noisy_image = cv2.add(noisy_image, gradient)
-        
-        cv2.imwrite(str(img_dir / "test.png"), noisy_image)
+        cv2.putText(test_image, "R", (25, 75), cv2.FONT_HERSHEY_COMPLEX, 2, 255, 2)
+        cv2.imwrite(str(img_dir / "test.png"), test_image)
         
         processor = Chars74KProcessor()
         processor.project_root = test_dir
@@ -183,22 +112,6 @@ def test_processor():
         
         processed_img = cv2.imread(str(processed_path), cv2.IMREAD_GRAYSCALE)
         assert processed_img is not None
-        
-        # Check brightness normalization
-        std_dev = np.std(processed_img)
-        assert std_dev > 0, "Image has no contrast"
-        
-        # Check noise reduction
-        unique_values = len(np.unique(processed_img))
-        assert unique_values < len(np.unique(noisy_image)), "Noise not reduced"
-        
-        # Check if character is centered
-        moments = cv2.moments(processed_img)
-        if moments["m00"] != 0:
-            cx = int(moments["m10"] / moments["m00"])
-            cy = int(moments["m01"] / moments["m00"])
-            assert abs(cx - processed_img.shape[1]/2) < 10, "Character not centered horizontally"
-            assert abs(cy - processed_img.shape[0]/2) < 10, "Character not centered vertically"
         
         print("All tests passed!")
         

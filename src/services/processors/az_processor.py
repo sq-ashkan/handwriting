@@ -13,9 +13,8 @@ class AZProcessor:
         self.source_path = self.project_root / "data" / "raw" / "az_handwritten"
         self.temp_path = self.project_root / "data" / "temp" / "AZ"
 
-        
-
     def _normalize_documentation(self) -> None:
+        """Normalize documentation to simplified format (filename label)."""
         doc_path = self.temp_path / "documentation.txt"
         normalized_path = self.temp_path / "normalized_documentation.txt"
         
@@ -25,16 +24,13 @@ class AZProcessor:
                     continue
                     
                 parts = line.strip().split()
-                if len(parts) >= 10:
-                    filename = parts[0]
-                    label = parts[-1]
-                    
-                    normalized_filename = f"EH_{filename.replace('-', '_')}"
-                    normalized_line = f"{normalized_filename} 1 255 1 0 0 27 27 AZ {label}\n"
-                    out.write(normalized_line)
+                if len(parts) >= 2:
+                    filename = parts[0]        # First column (filename)
+                    label = parts[-1].upper()          # Last column (label)
+                    out.write(f"{filename} {label}\n")
 
         normalized_path.replace(doc_path)
-        self.logger.info("Documentation normalized to IAM format")    
+        self.logger.info("Documentation normalized to simplified format")
         
     def process(self) -> bool:
         try:

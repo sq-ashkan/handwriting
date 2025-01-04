@@ -19,9 +19,9 @@ def main() -> bool:
         
         processors = {
             # "EH": EnglishHandwrittenProcessor(),
-            "MNIST": MNISTProcessor(),
+            # "MNIST": MNISTProcessor(),
             # "AZ": AZProcessor(),
-            # "Chars74K": Chars74KProcessor()
+            "Chars74K": Chars74KProcessor()
         }
         
         success = True
