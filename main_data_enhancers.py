@@ -8,7 +8,7 @@ from src.services.enhancers.noise_enhancer import NoiseEnhancer
 from src.services.enhancers.stroke_enhancer import StrokeEnhancer
 from src.services.enhancers.quality_enhancer import QualityEnhancer
 from src.services.enhancers.data_splitter import DataSplitter
-# from src.services.enhancers.merger import Merger
+from src.services.enhancers.merger import Merger
 
 def setup_basic_logging():
     logging.basicConfig(
@@ -23,11 +23,11 @@ class EnhancementPipeline:
     
     def __init__(self):
         self.enhancers: Dict[str, Type[BaseEnhancer]] = {
-            "noise": NoiseEnhancer,        
-            "stroke": StrokeEnhancer,        
-            "brightness": BrightnessEnhancer, 
-            "quality": QualityEnhancer,      
-            # "merger": Merger,
+            # "noise": NoiseEnhancer,        
+            # "stroke": StrokeEnhancer,        
+            # "brightness": BrightnessEnhancer, 
+            # "quality": QualityEnhancer,      
+            "merger": Merger,
             # "splitter": DataSplitter,
         }
         

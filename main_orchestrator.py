@@ -22,8 +22,6 @@ class MainOrchestrator:
                 if os.system(cmd) != 0:
                     logging.error(f"Failed: {cmd}")
                     return False
-                if cmd == "python main_processor.py":
-                    MainOrchestrator.create_temp_copies()
                 time.sleep(5)
             except Exception as e:
                 logging.error(f"Error: {e}")

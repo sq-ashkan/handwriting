@@ -15,12 +15,11 @@ class ImageAnalyzerInterface(ABC):
         pass
 
 class DatasetPath:
-    BASE_PATH = "/Users/roammer/Documents/Github/handwriting/data/temp"
-    DATASETS = ["EH", "MNIST", "AZ", "Chars74K"]
+    BASE_PATH = "/Users/roammer/Documents/Github/handwriting/data/processed/images"
     
     @staticmethod
-    def get_image_path(dataset: str) -> str:
-        return os.path.join(DatasetPath.BASE_PATH, dataset, "images")
+    def get_image_path() -> str:
+        return DatasetPath.BASE_PATH
 
 class ImageFeatureExtractor:
     @staticmethod
@@ -53,7 +52,6 @@ class ImageFeatureExtractor:
 
     @staticmethod
     def calculate_stroke_width(image: np.ndarray) -> float:
-        """Calculate average stroke width using distance transform"""
         if len(image.shape) > 2:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
@@ -64,7 +62,6 @@ class ImageFeatureExtractor:
 
     @staticmethod
     def calculate_slant_angle(image: np.ndarray) -> float:
-        """Estimate the slant angle of the writing"""
         if len(image.shape) > 2:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
@@ -78,7 +75,6 @@ class ImageFeatureExtractor:
 
     @staticmethod
     def calculate_contour_features(image: np.ndarray) -> Dict[str, float]:
-        """Calculate contour-based features"""
         if len(image.shape) > 2:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
@@ -109,31 +105,22 @@ class ImageFeatureExtractor:
             else:
                 gray = image
 
-            # Histogram of Oriented Gradients features
             hog_features = hog(gray, orientations=9, pixels_per_cell=(8, 8),
                              cells_per_block=(2, 2), visualize=False)
 
-            # Base features
             features = {
                 "dimensions": f"{image.shape[1]}x{image.shape[0]}",
                 "noise_level": round(ImageFeatureExtractor.calculate_noise_ratio(image), 2),
                 "mean_intensity": round(float(np.mean(gray)), 2),
                 "std_intensity": round(float(np.std(gray)), 2),
                 "entropy": round(float(shannon_entropy(gray)), 2),
-                
-                # Added shape and stroke features
                 "stroke_width": round(ImageFeatureExtractor.calculate_stroke_width(gray), 2),
                 "slant_angle": round(ImageFeatureExtractor.calculate_slant_angle(gray), 2),
-                
-                # Statistical features
                 "skewness": round(float(skew(gray.flatten())), 2),
                 "kurtosis": round(float(kurtosis(gray.flatten())), 2),
-                
-                # Gradient features
                 "gradient_strength": round(float(np.mean(hog_features)), 3),
             }
             
-            # Add contour features
             contour_features = ImageFeatureExtractor.calculate_contour_features(gray)
             features.update({k: round(v, 2) for k, v in contour_features.items()})
             
@@ -144,24 +131,18 @@ class ImageFeatureExtractor:
 class ImageAnalyzer(ImageAnalyzerInterface):
     def analyze_first_images(self) -> Dict[str, Dict[str, Any]]:
         results = {}
+        images_path = DatasetPath.get_image_path()
+        first_image = ImageFeatureExtractor.get_first_image_path(images_path)
         
-        for dataset in DatasetPath.DATASETS:
-            images_path = DatasetPath.get_image_path(dataset)
-            first_image = ImageFeatureExtractor.get_first_image_path(images_path)
-            
-            # Initialize dataset results
-            results[dataset] = {}
-            
-            # Add total image count
-            total_images = ImageFeatureExtractor.count_images(images_path)
-            results[dataset]["total_images"] = total_images
-            
-            # Add image features if first image exists
-            if first_image:
-                features = ImageFeatureExtractor.analyze_image(first_image)
-                results[dataset].update(features)
-            else:
-                results[dataset].update({"error": "No images found"})
+        results["processed"] = {}
+        total_images = ImageFeatureExtractor.count_images(images_path)
+        results["processed"]["total_images"] = total_images
+        
+        if first_image:
+            features = ImageFeatureExtractor.analyze_image(first_image)
+            results["processed"].update(features)
+        else:
+            results["processed"].update({"error": "No images found"})
                 
         return results
 
