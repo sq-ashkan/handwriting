@@ -9,6 +9,8 @@ data/temp
 data/cache
 data/*
 data/processed
+data/raw
+data/final
 
 
 # Python

@@ -7,8 +7,6 @@ from src.services.enhancers.brightness_enhancer import BrightnessEnhancer
 from src.services.enhancers.noise_enhancer import NoiseEnhancer
 from src.services.enhancers.stroke_enhancer import StrokeEnhancer
 from src.services.enhancers.quality_enhancer import QualityEnhancer
-from src.services.enhancers.data_splitter import DataSplitter
-from src.services.enhancers.merger import Merger
 
 def setup_basic_logging():
     logging.basicConfig(
@@ -23,12 +21,10 @@ class EnhancementPipeline:
     
     def __init__(self):
         self.enhancers: Dict[str, Type[BaseEnhancer]] = {
-            # "noise": NoiseEnhancer,        
-            # "stroke": StrokeEnhancer,        
-            # "brightness": BrightnessEnhancer, 
-            # "quality": QualityEnhancer,      
-            "merger": Merger,
-            # "splitter": DataSplitter,
+            "noise": NoiseEnhancer,        
+            "stroke": StrokeEnhancer,        
+            "brightness": BrightnessEnhancer, 
+            "quality": QualityEnhancer,      
         }
         
     def process_dataset(self, dataset_name: str) -> bool:
@@ -42,14 +38,14 @@ class EnhancementPipeline:
                 enhancer = enhancer_class(dataset_path)
                 if not enhancer.process():
                     logging.error(f"Failed to apply {enhancer_name} to {dataset_name}")
-                    return False
+                    raise Exception(f"Enhancement {enhancer_name} failed for {dataset_name}")
                 
             logging.info(f"Successfully completed enhancement pipeline for {dataset_name}")
             return True
             
         except Exception as e:
             logging.error(f"Error processing {dataset_name}: {str(e)}")
-            return False
+            raise  # Re-raise the exception to stop the entire pipeline
 
 def main() -> bool:
     try:
@@ -61,13 +57,16 @@ def main() -> bool:
         pipeline = EnhancementPipeline()
         
         # Process each dataset
-        success = True
         for dataset_name in EnhancementPipeline.DATASET_NAMES:
-            if not pipeline.process_dataset(dataset_name):
-                logging.error(f"Failed to enhance {dataset_name} dataset")
-                success = False
+            try:
+                if not pipeline.process_dataset(dataset_name):
+                    logging.error(f"Failed to enhance {dataset_name} dataset")
+                    return False
+            except Exception as e:
+                logging.error(f"Critical error in {dataset_name} dataset: {str(e)}")
+                return False
         
-        return success
+        return True
             
     except Exception as e:
         logging.error(f"Critical error in enhancement pipeline: {str(e)}")

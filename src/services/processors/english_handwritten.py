@@ -111,7 +111,8 @@ class EnglishHandwrittenProcessor:
         def copy_file(src_dest):
             src, dest = src_dest
             dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dest)
+            new_dest = dest.parent / f"EH_{dest.name}"
+            shutil.copy2(src, new_dest)
         
         source_files = list(self.source_path.rglob("*"))
         copy_pairs = [

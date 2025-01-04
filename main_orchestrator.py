@@ -9,12 +9,10 @@ class MainOrchestrator:
     @staticmethod
     def execute_pipeline():
         commands = [
-            # "python main_downloader.py",
+            "python main_downloader.py",
             "python main_processor.py",
-            "python analyse.py",
-            "mv analyse_result.json analyse_result_before.json",
             "python main_data_enhancers.py",
-            "python analyse.py"
+            "python main_modifier.py",
         ]
 
         for cmd in commands:
