@@ -14,38 +14,17 @@ class BaseEnhancer(ABC):
         
     @staticmethod
     def _process_image_static(args: Tuple[str, dict]) -> bool:
-        """Static method for multiprocessing"""
+        """Static method for multiprocessing - now just passes through the image"""
         try:
             image_path, config = args
-            image = cv2.imread(str(image_path))
+            # Just read and write back, no processing
+            image = cv2.imread(str(image_path), cv2.IMREAD_UNCHANGED)
             if image is None:
                 logging.error(f"Failed to read image: {image_path}")
                 return False
                 
-            if len(image.shape) > 2:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                
-            # Apply CLAHE with config params
-            clahe = cv2.createCLAHE(
-                clipLimit=float(config.get('clip_limit', 2.0)), 
-                tileGridSize=(8,8)
-            )
-            normalized = clahe.apply(image)
-            
-            # Adjust mean and standard deviation
-            current_mean = np.mean(normalized)
-            current_std = np.std(normalized)
-            target_mean = float(config.get('target_mean', 50.0))
-            target_std = float(config.get('target_std', 70.0))
-            
-            # Scale and shift
-            scaled = ((normalized - current_mean) * 
-                     (target_std / current_std)) + target_mean
-            
-            enhanced = np.clip(scaled, 0, 255).astype(np.uint8)
-            
-            # Save the enhanced image
-            cv2.imwrite(str(image_path), enhanced)
+            # Write back exactly as read
+            cv2.imwrite(str(image_path), image)
             return True
             
         except Exception as e:

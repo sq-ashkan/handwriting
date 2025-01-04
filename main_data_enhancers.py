@@ -26,7 +26,7 @@ class EnhancementPipeline:
             "noise": NoiseEnhancer,        
             "stroke": StrokeEnhancer,        
             "brightness": BrightnessEnhancer, 
-            # "quality": QualityEnhancer,      
+            "quality": QualityEnhancer,      
             # "merger": Merger,
             # "splitter": DataSplitter,
         }
