@@ -1,7 +1,7 @@
 # Handwritten Character Recognition (OCR) Project
 
 ## Main Goal
-Develop a system capable of recognizing handwritten characters (letters or numbers) uploaded by a user with **over 99% accuracy** in demo and real-user testing environments, primarily for presentation to investors.
+Develop a system capable of recognizing handwritten characters (letters or numbers) uploaded by a user with **over 99% accuracy** in demo and real-user testing environments.
 
 ## Development Environment Specifications
 - **Operating System**: macOS
@@ -9,11 +9,12 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 - **RAM**: Minimum 40GB free
 - **Priority**: High accuracy in real-world conditions
 - **Coding Language**: English
-- **Documentation Language**: Persian/English
+- **Documentation Language**: English
 
 ## Project Structure
 ```
 /Users/roammer/Documents/Github/handwriting/
+├── main_orchestrator.py                 # Call Workflow for make data ready for train job
 ├── main_data_enhancers.py               # Main enhancement orchestrator
 ├── main_download.py                     # Main data downloader
 ├── main_processor.py                    # Main data processor
@@ -22,7 +23,6 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 ├── src/                                 # Core project code
 │   ├── services/                        # Main services
 │   │   ├── enhancers/                   # Enhancement modules
-│   │   │   ├── __init__.py
 │   │   │   ├── base_enhancer.py        # Base enhancement class
 │   │   │   ├── brightness_enhancer.py   # Brightness normalization
 │   │   │   ├── noise_enhancer.py       # Noise reduction
