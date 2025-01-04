@@ -1,18 +1,37 @@
-numpy>=1.22.0
-opencv-python>=4.5.0
+# Core Data Processing
+numpy>=2.0.1
 pandas>=1.4.0
-matplotlib>=3.5.0
-scikit-learn>=1.0.0
-Pillow>=9.0.0
-imagehash>=4.3.0
-scipy>=1.8.0
-tqdm>=4.65.0
-PyYAML>=6.0
+scipy>=1.14.1
+
+# Machine Learning & Deep Learning
 torch>=2.1.0
 torchvision>=0.16.0
 torchaudio>=2.1.0
-numpy>=1.24.0
+scikit-learn>=1.6.0
+
+# Image Processing
 opencv-python>=4.8.0
-tqdm>=4.66.0
+Pillow>=11.0.0
+imagehash>=4.3.0
+matplotlib>=3.9.2
+
+# Utilities & Progress Tracking
+tqdm>=4.66.5
+PyYAML>=6.0.2
+
+# Model Export & Optimization
 coremltools>=7.1
-pillow>=10.0.0
+
+# Optional but Recommended for M2 Ultra Optimization
+# Install via conda for better performance:
+# conda install -c conda-forge numpy pandas scikit-learn
+# conda install pytorch torchvision torchaudio -c pytorch
+
+# System Specific Dependencies
+python>=3.12.7
+
+
+# *****
+# Use this Line for install everything
+# conda install pytorch torchvision torchaudio -c pytorch numpy>=2.0.1 pandas>=1.4.0 scipy>=1.14.1 scikit-learn>=1.6.0 opencv-python>=4.8.0 pillow>=11.0.0 matplotlib>=3.9.2 tqdm>=4.66.5 pyyaml>=6.0.2 && pip install imagehash>=4.3.0 coremltools>=7.1
+# *****

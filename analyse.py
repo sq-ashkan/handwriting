@@ -33,6 +33,17 @@ class ImageFeatureExtractor:
             return ""
 
     @staticmethod
+    def count_images(folder_path: str) -> int:
+        """Count total number of image files in the folder"""
+        try:
+            image_extensions = {'.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif'}
+            return sum(1 for f in os.listdir(folder_path) 
+                      if os.path.isfile(os.path.join(folder_path, f)) 
+                      and os.path.splitext(f)[1].lower() in image_extensions)
+        except Exception:
+            return 0
+
+    @staticmethod
     def calculate_noise_ratio(image: np.ndarray) -> float:
         if len(image.shape) > 2:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -138,11 +149,19 @@ class ImageAnalyzer(ImageAnalyzerInterface):
             images_path = DatasetPath.get_image_path(dataset)
             first_image = ImageFeatureExtractor.get_first_image_path(images_path)
             
+            # Initialize dataset results
+            results[dataset] = {}
+            
+            # Add total image count
+            total_images = ImageFeatureExtractor.count_images(images_path)
+            results[dataset]["total_images"] = total_images
+            
+            # Add image features if first image exists
             if first_image:
                 features = ImageFeatureExtractor.analyze_image(first_image)
-                results[dataset] = features
+                results[dataset].update(features)
             else:
-                results[dataset] = {"error": "No images found"}
+                results[dataset].update({"error": "No images found"})
                 
         return results
 

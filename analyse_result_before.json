@@ -1,0 +1,62 @@
+{
+    "EH": {
+        "total_images": 3410,
+        "dimensions": "27x27",
+        "noise_level": 2.48,
+        "mean_intensity": 10.78,
+        "std_intensity": 45.38,
+        "entropy": 0.8,
+        "stroke_width": 1.03,
+        "slant_angle": 0.0,
+        "skewness": 4.42,
+        "kurtosis": 18.63,
+        "gradient_strength": 0.09,
+        "contour_area": 18.0,
+        "contour_perimeter": 36.14
+    },
+    "MNIST": {
+        "total_images": 70000,
+        "dimensions": "27x27",
+        "noise_level": 4.37,
+        "mean_intensity": 26.3,
+        "std_intensity": 70.59,
+        "entropy": 1.45,
+        "stroke_width": 1.06,
+        "slant_angle": 0.0,
+        "skewness": 2.57,
+        "kurtosis": 5.02,
+        "gradient_strength": 0.094,
+        "contour_area": 43.0,
+        "contour_perimeter": 67.46
+    },
+    "AZ": {
+        "total_images": 372450,
+        "dimensions": "27x27",
+        "noise_level": 8.47,
+        "mean_intensity": 44.77,
+        "std_intensity": 97.02,
+        "entropy": 0.67,
+        "stroke_width": 1.22,
+        "slant_angle": 0.0,
+        "skewness": 1.71,
+        "kurtosis": 0.91,
+        "gradient_strength": 0.086,
+        "contour_area": 140.5,
+        "contour_perimeter": 58.04
+    },
+    "Chars74K": {
+        "total_images": 62992,
+        "dimensions": "27x27",
+        "noise_level": 5.57,
+        "mean_intensity": 73.48,
+        "std_intensity": 107.51,
+        "entropy": 2.81,
+        "stroke_width": 1.81,
+        "slant_angle": 0.0,
+        "skewness": 0.88,
+        "kurtosis": -1.1,
+        "gradient_strength": 0.094,
+        "contour_area": 209.5,
+        "contour_perimeter": 61.9
+    }
+}
