@@ -7,17 +7,6 @@ from tqdm import tqdm
 
 class MainOrchestrator:
     @staticmethod
-    def create_temp_copies():
-        data_path = Path('data')
-        temp_path = data_path / 'temp'
-        if temp_path.exists():
-            for i in tqdm(range(1, 11), desc="Creating temp copies", ncols=100):
-                new_temp = data_path / f'temp{i}'
-                if not new_temp.exists():
-                    shutil.copytree(temp_path, new_temp)
-                time.sleep(0.1)  # Small delay for visible progress bar
-
-    @staticmethod
     def execute_pipeline():
         commands = [
             # "python main_downloader.py",
