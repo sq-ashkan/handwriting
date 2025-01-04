@@ -54,9 +54,9 @@ class StrokeEnhancer(BaseEnhancer):
                 "local_area_size": 7
             },
             "Chars74K": {
-                "target_stroke_width": 1.6,
-                "width_tolerance": 0.3,
-                "max_scaling": 1.2,
+                "target_stroke_width": 1.4,
+                "width_tolerance": 0.4,
+                "max_scaling": 1.0,
                 "min_scaling": 0.6,
                 "skeleton_threshold": 0.5,
                 "direction_smoothing": 0.85,

@@ -24,8 +24,8 @@ class EnhancementPipeline:
     def __init__(self):
         self.enhancers: Dict[str, Type[BaseEnhancer]] = {
             "noise": NoiseEnhancer,        
-            # "stroke": StrokeEnhancer,        
-            # "brightness": BrightnessEnhancer, 
+            "stroke": StrokeEnhancer,        
+            "brightness": BrightnessEnhancer, 
             # "quality": QualityEnhancer,      
             # "merger": Merger,
             # "splitter": DataSplitter,

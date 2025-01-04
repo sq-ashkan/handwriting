@@ -11,18 +11,14 @@ from src.lib.constants import RAW_DIR
 
 def main() -> bool:
     try:
-        # پاک‌سازی کش قبل از شروع
         CacheManager.cleanup()
-        
-        # راه‌اندازی سیستم لاگ
         setup_logging()
         
-        # تعریف دانلودرها
         downloaders = {
-            # "EH": EnglishHandwrittenDownloader(),
-            # "MNIST": MNISTDatasetDownloader(),
+            "EH": EnglishHandwrittenDownloader(),
+            "MNIST": MNISTDatasetDownloader(),
             "A-Z": AZDatasetDownloader(),
-            # "Chars74K": Chars74KDatasetDownloader()
+            "Chars74K": Chars74KDatasetDownloader()
         }
         
         success_status = {}
