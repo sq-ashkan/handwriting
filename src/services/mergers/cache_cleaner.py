@@ -10,14 +10,6 @@ def cache_cleaner():
     Clean up processed directory and __pycache__ folders
     """
     try:
-        # Clean processed directory
-        base = Path('/Users/roammer/Documents/Github/handwriting/data')
-        processed = base / 'processed'
-        
-        if processed.exists():
-            logger.info("Removing processed directory...")
-            shutil.rmtree(processed)
-        
         # Clean __pycache__ directories
         mergers_path = Path('src/services/mergers')
         pycache_folders = list(mergers_path.glob('**/__pycache__'))
