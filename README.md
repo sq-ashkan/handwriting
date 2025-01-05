@@ -8,63 +8,66 @@ Develop a system capable of recognizing handwritten uppdercase characters (lette
 - **Processor**: Apple M2 Ultra (24-core CPU, 76-core GPU)
 - **RAM**: Minimum 40GB free
 - **Priority**: High accuracy in real-world conditions
-- **Coding Language**: English
-- **Documentation Language**: English
 
 ## Project Structure
 ```
-├── main_orchestrator.py                 # all workflos manager
-├── main_modifier.py                     # split and make data ready           from final to processed / cleaner
-├── main_data_enhancers.py               # Main enhancement orchestrator       from temp to final
-├── main_processor.py                    # Main data processor                 from raw to temp
-├── main_download.py                     # Main data downloader                download raw
-├── analyse.py                           # Dataset analyzer
+├── api/
+    └── inference.py                     # serverless for Vercel Server
+├── main_orchestrator.py                 # all workflows manager
+├── best_model.pth                       # final model from
 ├── requirements.txt                     # Project dependencies
-├── src/                                 # Core project code
-│   ├── services/                        # Main services
-│   │   ├── enhancers/                   # Enhancement modules
-│   │   │   ├── base_enhancer.py        # Base enhancement class
-│   │   │   ├── brightness_enhancer.py   # Brightness normalization
-│   │   │   ├── noise_enhancer.py       # Noise reduction
-│   │   │   ├── stroke_enhancer.py      # Stroke width normalization
-│   │   │   ├── quality_enhancer.py     # Quality improvement
-│   │   │   └── data_splitter.py        # Dataset splitting
-│   │   ├── downloaders/                 # Dataset downloaders
-│   │   │   ├── english_handwritten.py   # English dataset downloader ✓
-│   │   │   ├── mnist_downloader.py      # MNIST downloader ✓
-│   │   │   ├── az_downloader.py         # A-Z downloader ✓
-│   │   │   └── chars74k_downloader.py   # Chars74K downloader ✓
-│   │   ├── processors/                  # Data processors
-│   │   │   ├── english_handwritten.py
-│   │   │   ├── mnist_processor.py
-│   │   │   ├── az_processor.py
-│   │   │   └── chars74k_processor.py
-│   │   ├── preprocessor/                # Image pre-processing
-│   │   └── trainer/                     # Model training system
-│   ├── models/                          # Model architecture
-│   │   ├── layers.py                    # Network layers
-│   │   └── network.py                   # Network configuration
-│   └── lib/                             # Utility libraries
-│       ├── utils.py                     # General functions
-│       ├── cache_manager.py             # Cache and temporary file management
-│       └── constants.py                 # Constant variables
-└── data/                                # Datasets
-    └── processed/                       # Processed data
-        ├── digits/                      # Numeric characters (0-9)
-        │   ├── 0/                       # Character folder
-        │   │   ├── documentation.txt    # Image-label mappings
-        │   │   └── images/             # PNG image files
-        │   ├── 1/
-        │   │   ├── documentation.txt
-        │   │   └── images/
+└── src/                                # Core project code
+    ├── api/                            # API related files
+    │   └── api.operator.py            # API operations handler
+    ├── lib/                            # Utility libraries
+    │   ├── cache_manager.py           # Cache management
+    │   ├── config.py                  # Configuration settings
+    │   ├── constants.py               # Constant variables
+    │   └── utils.py                   # Utility functions
+    ├── model/                          # Model related files
+    │   └── train.operator.py          # Training operations
+    ├── operators/                      # Main operators
+    │   ├── main_data_enhancers.operator.py
+    │   ├── main_downloader.operator.py
+    │   ├── main_modifier.operator.py
+    │   └── main_processor.operator.py
+    └── services/                       # Core services
+        ├── downloaders/                # Dataset downloaders
+        │   ├── az_downloader.py
+        │   ├── chars74k_downloader.py
+        │   ├── english_handwritten.py
+        │   └── mnist_downloader.py
+        ├── enhancers/                  # Enhancement modules
+        │   ├── base_enhancer.py
+        │   ├── brightness_enhancer.py
+        │   ├── data_splitter.py
+        │   ├── noise_enhancer.py
+        │   ├── quality_enhancer.py
+        │   └── stroke_enhancer.py
+        ├── mergers/                    # Data merging modules
+        │   ├── cache_cleaner.py
+        │   ├── cleaner.py
+        │   ├── merger.py
+        │   ├── splitter.py
+        │   └── verifier.py
+        ├── preprocessor/               # Image pre-processing
+        └── processors/                 # Data processors
+            ├── az_processor.py
+            ├── chars74k_processor.py
+            ├── english_handwritten.py
+            └── mnist_processor.py
+
+└── data/                               # Datasets
+    └── processed/                      # Processed data
+        ├── digits/                     # Numeric characters (0-9)
+        │   ├── 0/                      # Character folder
+        │   │   ├── documentation.txt   # Image-label mappings
+        │   │   └── images/            # PNG image files
         │   └── ...
-        └── uppercase/                   # Uppercase letters (A-Z)
-            ├── A/                       # Character folder
-            │   ├── documentation.txt    # Image-label mappings
-            │   └── images/             # PNG image files
-            ├── B/
-            │   ├── documentation.txt
-            │   └── images/
+        └── uppercase/                  # Uppercase letters (A-Z)
+            ├── A/                      # Character folder
+            │   ├── documentation.txt   # Image-label mappings
+            │   └── images/            # PNG image files
             └── ...
 ```
 ## Processing Flow
@@ -84,10 +87,9 @@ Develop a system capable of recognizing handwritten uppdercase characters (lette
 - Cache management for temporary files
 - Each module follows SOLID principles
 - all images 27x27 are PNG
-- no Class based files, just functional and clean code with seperate layer solid
-- Flask should be added on trained system to provide webservice to revieve PNG image and recognise the letter or number
+- Flask for api
 - test with the postman
-- user part should be done with next.js and user can upload and test the system with the image with mobile
+- user part with next.js/react.js
 
 ## Data Set report
 {
