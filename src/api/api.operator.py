@@ -6,10 +6,11 @@ from PIL import Image
 import io
 import base64
 import numpy as np
+import cv2
 
 app = Flask(__name__)
 
-# Model Architecture
+# [Previous model architecture code remains the same...]
 class AttentionModule(nn.Module):
     def __init__(self, channels: int):
         super().__init__()
@@ -119,16 +120,40 @@ def initialize_model():
     print("Model initialized successfully")
 
 def preprocess_image(image_data: bytes) -> torch.Tensor:
-    """Preprocesses the input image"""
-    # Convert bytes to PIL Image
-    image = Image.open(io.BytesIO(image_data)).convert('L')
+    """Enhanced preprocessing function to convert any input image to binary format"""
+    # Convert bytes to numpy array
+    nparr = np.frombuffer(image_data, np.uint8)
+    image = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+    
+    # Ensure image is loaded
+    if image is None:
+        raise ValueError("Failed to load image")
     
     # Resize to 27x27
-    if image.size != (27, 27):
-        image = image.resize((27, 27))
+    image = cv2.resize(image, (27, 27), interpolation=cv2.INTER_AREA)
+    
+    # Apply adaptive thresholding to handle varying lighting conditions
+    binary = cv2.adaptiveThreshold(
+        image,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        11,  # Block size
+        2    # C constant
+    )
+    
+    # Determine if we need to invert the image
+    # Count white pixels
+    white_pixels = np.sum(binary == 255)
+    total_pixels = binary.size
+    
+    # If majority is white, invert the image
+    if white_pixels > total_pixels / 2:
+        binary = cv2.bitwise_not(binary)
     
     # Convert to tensor and normalize
-    image_tensor = torch.FloatTensor(np.array(image)).unsqueeze(0).unsqueeze(0) / 255.0
+    image_tensor = torch.FloatTensor(binary).unsqueeze(0).unsqueeze(0) / 255.0
+    
     return image_tensor
 
 @app.route('/ping', methods=['GET'])
@@ -158,9 +183,16 @@ def predict():
             confidence = float(probabilities[0][predicted_idx])
             predicted_char = idx_to_label[predicted_idx]
         
+        # For debugging, you can also return the preprocessed image
+        # Convert tensor back to base64 encoded image
+        preprocessed_img = (image_tensor.squeeze().cpu().numpy() * 255).astype(np.uint8)
+        _, buffer = cv2.imencode('.png', preprocessed_img)
+        preprocessed_b64 = base64.b64encode(buffer).decode('utf-8')
+        
         return jsonify({
             "character": predicted_char,
             "confidence": confidence,
+            "preprocessed_image": preprocessed_b64,  # This helps in debugging
             "status": "success"
         })
     
