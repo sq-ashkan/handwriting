@@ -13,7 +13,6 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 
 ## Project Structure
 ```
-
 ├── main_orchestrator.py                 # all workflos manager
 ├── main_modifier.py                     # split and make data ready           from final to processed / cleaner
 ├── main_data_enhancers.py               # Main enhancement orchestrator       from temp to final
@@ -51,15 +50,45 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 │       └── constants.py                 # Constant variables
 └── data/                                # Datasets
     └── processed/                       # Processed data
-        ├── 1                   
-        ├── 2             
-        ├── 3   
-        .   .
-        .   .
-        .   .
-        └── z     
+        ├── digits/                      # Numeric characters (0-9)
+        │   ├── 0/                       # Character folder
+        │   │   ├── documentation.txt    # Image-label mappings
+        │   │   └── images/             # PNG image files
+        │   ├── 1/
+        │   │   ├── documentation.txt
+        │   │   └── images/
+        │   └── ...
+        ├── lowercase/                   # Lowercase letters (a-z)
+        │   ├── a/                       # Character folder
+        │   │   ├── documentation.txt    # Image-label mappings
+        │   │   └── images/             # PNG image files
+        │   ├── b/
+        │   │   ├── documentation.txt
+        │   │   └── images/
+        │   └── ...
+        └── uppercase/                   # Uppercase letters (A-Z)
+            ├── A/                       # Character folder
+            │   ├── documentation.txt    # Image-label mappings
+            │   └── images/             # PNG image files
+            ├── B/
+            │   ├── documentation.txt
+            │   └── images/
+            └── ...
+```
+
+## Documentation Format
+Each character folder contains a documentation.txt file that maps image files to their corresponding labels. The format follows this structure:
 
 ```
+Ash_PNG_000002 0
+Ash_PNG_000022 0
+Ash_PNG_000035 0
+```
+
+Where:
+- The first column (e.g., Ash_PNG_000002) is a unique identifier across the entire dataset
+- The second column represents the character label for that image
+- Each image identifier is guaranteed to be unique across all character categories
 
 ## Processing Flow
 1. Raw data → Downloaders
