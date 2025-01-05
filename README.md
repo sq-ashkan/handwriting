@@ -13,11 +13,12 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 
 ## Project Structure
 ```
-/Users/roammer/Documents/Github/handwriting/
-├── main_orchestrator.py                 # Call Workflow for make data ready for train job
-├── main_data_enhancers.py               # Main enhancement orchestrator
-├── main_download.py                     # Main data downloader
-├── main_processor.py                    # Main data processor
+
+├── main_orchestrator.py                 # all workflos manager
+├── main_modifier.py                     # split and make data ready           from final to processed / cleaner
+├── main_data_enhancers.py               # Main enhancement orchestrator       from temp to final
+├── main_processor.py                    # Main data processor                 from raw to temp
+├── main_download.py                     # Main data downloader                download raw
 ├── analyse.py                           # Dataset analyzer
 ├── requirements.txt                     # Project dependencies
 ├── src/                                 # Core project code
@@ -48,39 +49,16 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
 │       ├── utils.py                     # General functions
 │       ├── cache_manager.py             # Cache and temporary file management
 │       └── constants.py                 # Constant variables
-├── data/                                # Datasets
-│   ├── raw/                             # Raw data
-│   │   ├── english_handwritten/         # English Handwritten dataset
-│   │   │   ├── images/                  # Standardized images
-│   │   │   └── documentation.txt        # Standard format documentation
-│   │   ├── mnist/                       # MNIST dataset
-│   │   │   ├── images/                  # Standardized images
-│   │   │   └── documentation.txt        # Standard format documentation
-│   │   ├── az_handwritten/              # A-Z dataset
-│   │   │   ├── images/                  # Standardized images
-│   │   │   └── documentation.txt        # Standard format documentation
-│   │   └── chars74k/                    # Chars74K dataset
-│   │       ├── images/                  # 27x27 pixel images
-│   │       └── documentation.txt        # Standard format documentation
-│   ├── processed/                       # Processed data
-│   ├── temp/                            # Temporary data
-│   │   ├── EH/                          # Temporary English Handwritten data
-│   │   │   ├── images/    
-│   │   │   └── documentation.txt
-│   │   ├── MNIST/                       # Temporary MNIST data
-│   │   │   ├── images/    
-│   │   │   └── documentation.txt
-│   │   ├── AZ/                          # Temporary A-Z data
-│   │   │   ├── images/    
-│   │   │   └── documentation.txt
-│   │   └── Chars74K/                    # Temporary Chars74K data
-│   │       ├── images/    
-│   │       └── documentation.txt
-│   └── logs/                            # Logs and reports
-└── tests/                               # Unit tests
-    ├── test_downloaders/
-    ├── test_preprocessor/
-    └── test_trainer/
+└── data/                                # Datasets
+    └── processed/                       # Processed data
+        ├── 1                   
+        ├── 2             
+        ├── 3   
+        .   .
+        .   .
+        .   .
+        └── z     
+
 ```
 
 ## Processing Flow
