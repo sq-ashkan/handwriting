@@ -106,3 +106,80 @@ Where:
 - Strong error handling and logging
 - Cache management for temporary files
 - Each module follows SOLID principles
+- More than 500k png images 27x27 
+- no Class based files, just functional and clean code with seperate layer solid
+- Flask should be added on trained system
+- test with the postman
+- user part should be done with next.js and user can upload and test the system with the image with mobile
+
+## Data Set report
+{
+    "digits": {
+        "9": 7974,
+        "0": 7919,
+        "7": 8309,
+        "6": 7892,
+        "1": 8893,
+        "8": 7841,
+        "4": 7840,
+        "3": 8157,
+        "2": 8006,
+        "5": 7329
+    },
+    "lowercase": {
+        "r": 1016,
+        "u": 1016,
+        "i": 1016,
+        "n": 1016,
+        "g": 1016,
+        "z": 1016,
+        "t": 1016,
+        "s": 1016,
+        "a": 1016,
+        "f": 1016,
+        "o": 1016,
+        "h": 1016,
+        "m": 1016,
+        "j": 1016,
+        "c": 1016,
+        "d": 1016,
+        "v": 1016,
+        "q": 1016,
+        "x": 1016,
+        "e": 1016,
+        "b": 1016,
+        "k": 1016,
+        "l": 1016,
+        "y": 1016,
+        "p": 1016,
+        "w": 1016
+    },
+    "uppercase": {
+        "R": 12582,
+        "U": 30024,
+        "I": 2136,
+        "N": 20026,
+        "G": 6778,
+        "Z": 7092,
+        "T": 23511,
+        "S": 49435,
+        "A": 14885,
+        "F": 2179,
+        "O": 58841,
+        "H": 8234,
+        "M": 13352,
+        "J": 9509,
+        "C": 24425,
+        "D": 11150,
+        "V": 5198,
+        "Q": 6828,
+        "X": 7288,
+        "E": 12456,
+        "B": 9684,
+        "K": 6619,
+        "L": 12602,
+        "Y": 11875,
+        "P": 20357,
+        "W": 11800
+    }
+}
