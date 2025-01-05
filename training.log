@@ -1,0 +1,44 @@
+2025-01-05 14:34:07,500 - INFO - Starting initial training with 1000 samples per class...
+2025-01-05 14:34:07,516 - INFO - Loading 1000 images from 0
+2025-01-05 14:34:07,532 - INFO - Loading 1000 images from 1
+2025-01-05 14:34:07,550 - INFO - Loading 1000 images from 2
+2025-01-05 14:34:07,567 - INFO - Loading 1000 images from 3
+2025-01-05 14:34:07,584 - INFO - Loading 1000 images from 4
+2025-01-05 14:34:07,602 - INFO - Loading 1000 images from 5
+2025-01-05 14:34:07,619 - INFO - Loading 1000 images from 6
+2025-01-05 14:34:07,636 - INFO - Loading 1000 images from 7
+2025-01-05 14:34:07,653 - INFO - Loading 1000 images from 8
+2025-01-05 14:34:07,670 - INFO - Loading 1000 images from 9
+2025-01-05 14:34:07,686 - INFO - Loading 1000 images from A
+2025-01-05 14:34:07,703 - INFO - Loading 1000 images from B
+2025-01-05 14:34:07,718 - INFO - Loading 1000 images from C
+2025-01-05 14:34:07,735 - INFO - Loading 1000 images from D
+2025-01-05 14:34:07,752 - INFO - Loading 1000 images from E
+2025-01-05 14:34:07,769 - INFO - Loading 1000 images from F
+2025-01-05 14:34:07,786 - INFO - Loading 1000 images from G
+2025-01-05 14:34:07,802 - INFO - Loading 1000 images from H
+2025-01-05 14:34:07,819 - INFO - Loading 1000 images from I
+2025-01-05 14:34:07,836 - INFO - Loading 1000 images from J
+2025-01-05 14:34:07,853 - INFO - Loading 1000 images from K
+2025-01-05 14:34:07,870 - INFO - Loading 1000 images from L
+2025-01-05 14:34:07,887 - INFO - Loading 1000 images from M
+2025-01-05 14:34:07,903 - INFO - Loading 1000 images from N
+2025-01-05 14:34:07,918 - INFO - Loading 1000 images from O
+2025-01-05 14:34:07,934 - INFO - Loading 1000 images from P
+2025-01-05 14:34:07,951 - INFO - Loading 1000 images from Q
+2025-01-05 14:34:07,967 - INFO - Loading 1000 images from R
+2025-01-05 14:34:07,982 - INFO - Loading 1000 images from S
+2025-01-05 14:34:07,998 - INFO - Loading 1000 images from T
+2025-01-05 14:34:08,014 - INFO - Loading 1000 images from U
+2025-01-05 14:34:08,031 - INFO - Loading 1000 images from V
+2025-01-05 14:34:08,048 - INFO - Loading 1000 images from W
+2025-01-05 14:34:08,065 - INFO - Loading 1000 images from X
+2025-01-05 14:34:08,082 - INFO - Loading 1000 images from Y
+2025-01-05 14:34:08,099 - INFO - Loading 1000 images from Z
+2025-01-05 14:34:08,100 - INFO - Loaded 36000 samples across 36 classes
+2025-01-05 14:34:08,534 - INFO - 
+Starting training phase for epoch 1
+2025-01-05 14:35:50,031 - INFO - Epoch 1 | Train Loss: 2.850 | Train Acc: 28.66% | Val Loss: 1.461 | Val Acc: 69.10%
+2025-01-05 14:35:50,032 - INFO - Saving best model with accuracy: 69.10%
+2025-01-05 14:35:50,086 - INFO - 
+Starting training phase for epoch 2
