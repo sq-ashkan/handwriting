@@ -9,13 +9,13 @@ class MainOrchestrator:
     @staticmethod
     def execute_pipeline():
         commands = [
-            # "python main_downloader.py",
-            # "python main_processor.py",
-            # "python main_data_enhancers.py",
-            # "python main_modifier.py",
-            # "python main_augmentation.py",
-            "python train.py",
-            "python api.py"
+            "PYTHONPATH=$PYTHONPATH:. python src/operators/main_downloader.operator.py",
+            "PYTHONPATH=$PYTHONPATH:. python src/operators/main_processor.operator.py",
+            "PYTHONPATH=$PYTHONPATH:. python src/operators/main_data_enhancers.operator.py", 
+            "PYTHONPATH=$PYTHONPATH:. python src/operators/main_modifier.operator.py",
+            "PYTHONPATH=$PYTHONPATH:. python src/operators/main_augmentation.operator.py",
+            "PYTHONPATH=$PYTHONPATH:. python src/model/train.operator.py",
+            "PYTHONPATH=$PYTHONPATH:. python src/api/api.operator.py"
         ]
 
         for cmd in commands:

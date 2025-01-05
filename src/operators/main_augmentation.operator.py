@@ -92,15 +92,11 @@ def process_character_folder(char_folder: str, target_count: int = 20000) -> Non
         return
 
     if current_count > target_count:
-        backup_path = os.path.join(os.path.dirname(char_folder), 
-                                 f'backup_{datetime.now().strftime("%Y%m%d_%H%M")}')
-        os.makedirs(backup_path, exist_ok=True)
-        
         all_images = glob.glob(os.path.join(images_path, "*.[pjJ][npNP][gG]*"))
-        to_move = random.sample(all_images, current_count - target_count)
+        to_remove = random.sample(all_images, current_count - target_count)
         
-        for img_path in tqdm(to_move, desc="Moving excess images"):
-            shutil.move(img_path, os.path.join(backup_path, os.path.basename(img_path)))
+        for img_path in tqdm(to_remove, desc="Removing excess images"):
+            os.remove(img_path)
         return
 
     # Load base images
