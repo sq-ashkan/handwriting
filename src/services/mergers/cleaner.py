@@ -1,23 +1,21 @@
 from pathlib import Path
-import shutil
-from tqdm import tqdm
+from shutil import rmtree
 
 def cleaner():
     base = Path('/Users/roammer/Documents/Github/handwriting/data')
-    ready = base / 'ready'
-
-    # 1. پاک کردن فولدرهای temp، raw، processed و final
-    for dir in tqdm(['temp', 'raw', 'processed', 'final'], desc="1. Cleaning Folders"):
-        folder = base / dir
+    
+    folders_to_clean = ['temp', 'raw', 'processed', 'final']
+    for folder_name in folders_to_clean:
+        folder = base / folder_name
         if folder.exists():
-            shutil.rmtree(folder)
-
-    # 2. تغییر نام پوشه ready به processed
+            rmtree(folder)
+    
+    ready = base / 'ready'
     if ready.exists():
         ready.rename(base / 'processed')
-        print("\n✅ Folder 'ready' renamed to 'processed'.")
+        print("✅ Folder 'ready' renamed to 'processed'.")
     else:
-        print("\n❌ Folder 'ready' not found.")
+        print("Folder 'ready' not found.")
 
 if __name__ == "__main__":
     cleaner()
