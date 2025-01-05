@@ -1,15 +1,9 @@
 {
     "version": 2,
     "builds": [
-      { "src": "api/**/*.py", "use": "@vercel/python" }
+      { "src": "api/inference.py", "use": "@vercel/python" }
     ],
     "routes": [
-      { "src": "/api/inference", "dest": "api/inference.py" }
-    ],
-    "functions": {
-      "api/**/*.py": {
-        "memory": 1024,
-        "maxDuration": 10
-      }
-    }
+      { "src": "/(.*)", "dest": "api/inference.py" }
+    ]
   }
