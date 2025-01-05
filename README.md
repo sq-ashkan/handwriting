@@ -1,7 +1,7 @@
 # Handwritten Character Recognition (OCR) Project
 
 ## Main Goal
-Develop a system capable of recognizing handwritten characters (letters or numbers) uploaded by a user with **over 99% accuracy** in demo and real-user testing environments.
+Develop a system capable of recognizing handwritten uppdercase characters (letters or numbers) uploaded by a user with **over 99% accuracy** in demo and real-user testing environments.
 
 ## Development Environment Specifications
 - **Operating System**: macOS
@@ -58,14 +58,6 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
         │   │   ├── documentation.txt
         │   │   └── images/
         │   └── ...
-        ├── lowercase/                   # Lowercase letters (a-z)
-        │   ├── a/                       # Character folder
-        │   │   ├── documentation.txt    # Image-label mappings
-        │   │   └── images/             # PNG image files
-        │   ├── b/
-        │   │   ├── documentation.txt
-        │   │   └── images/
-        │   └── ...
         └── uppercase/                   # Uppercase letters (A-Z)
             ├── A/                       # Character folder
             │   ├── documentation.txt    # Image-label mappings
@@ -75,21 +67,6 @@ Develop a system capable of recognizing handwritten characters (letters or numbe
             │   └── images/
             └── ...
 ```
-
-## Documentation Format
-Each character folder contains a documentation.txt file that maps image files to their corresponding labels. The format follows this structure:
-
-```
-Ash_PNG_000002 0
-Ash_PNG_000022 0
-Ash_PNG_000035 0
-```
-
-Where:
-- The first column (e.g., Ash_PNG_000002) is a unique identifier across the entire dataset
-- The second column represents the character label for that image
-- Each image identifier is guaranteed to be unique across all character categories
-
 ## Processing Flow
 1. Raw data → Downloaders
 2. Downloaded data → Processors
@@ -106,80 +83,52 @@ Where:
 - Strong error handling and logging
 - Cache management for temporary files
 - Each module follows SOLID principles
-- More than 500k png images 27x27 
+- all images 27x27 are PNG
 - no Class based files, just functional and clean code with seperate layer solid
-- Flask should be added on trained system
+- Flask should be added on trained system to provide webservice to revieve PNG image and recognise the letter or number
 - test with the postman
 - user part should be done with next.js and user can upload and test the system with the image with mobile
 
 ## Data Set report
 {
     "digits": {
-        "9": 7974,
-        "0": 7919,
-        "7": 8309,
-        "6": 7892,
-        "1": 8893,
-        "8": 7841,
-        "4": 7840,
-        "3": 8157,
-        "2": 8006,
-        "5": 7329
-    },
-    "lowercase": {
-        "r": 1016,
-        "u": 1016,
-        "i": 1016,
-        "n": 1016,
-        "g": 1016,
-        "z": 1016,
-        "t": 1016,
-        "s": 1016,
-        "a": 1016,
-        "f": 1016,
-        "o": 1016,
-        "h": 1016,
-        "m": 1016,
-        "j": 1016,
-        "c": 1016,
-        "d": 1016,
-        "v": 1016,
-        "q": 1016,
-        "x": 1016,
-        "e": 1016,
-        "b": 1016,
-        "k": 1016,
-        "l": 1016,
-        "y": 1016,
-        "p": 1016,
-        "w": 1016
+        "9": 20000,
+        "0": 20000,
+        "7": 20000,
+        "6": 20000,
+        "1": 20000,
+        "8": 20000,
+        "4": 20000,
+        "3": 20000,
+        "2": 20000,
+        "5": 20000
     },
     "uppercase": {
-        "R": 12582,
-        "U": 30024,
-        "I": 2136,
-        "N": 20026,
-        "G": 6778,
-        "Z": 7092,
-        "T": 23511,
-        "S": 49435,
-        "A": 14885,
-        "F": 2179,
-        "O": 58841,
-        "H": 8234,
-        "M": 13352,
-        "J": 9509,
-        "C": 24425,
-        "D": 11150,
-        "V": 5198,
-        "Q": 6828,
-        "X": 7288,
-        "E": 12456,
-        "B": 9684,
-        "K": 6619,
-        "L": 12602,
-        "Y": 11875,
-        "P": 20357,
-        "W": 11800
+        "R": 20000,
+        "U": 20000,
+        "I": 20000,
+        "N": 20000,
+        "G": 20000,
+        "Z": 20000,
+        "T": 20000,
+        "S": 20000,
+        "A": 20000,
+        "F": 20000,
+        "O": 20000,
+        "H": 20000,
+        "M": 20000,
+        "J": 20000,
+        "C": 20000,
+        "D": 20000,
+        "V": 20000,
+        "Q": 20000,
+        "X": 20000,
+        "E": 20000,
+        "B": 20000,
+        "K": 20000,
+        "L": 20000,
+        "Y": 20000,
+        "P": 20000,
+        "W": 20000
     }
 }
