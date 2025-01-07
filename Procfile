@@ -1,0 +1,1 @@
+web: python deployed_app.py
