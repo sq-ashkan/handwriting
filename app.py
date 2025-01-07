@@ -1,3 +1,14 @@
+"""
+Handwritten Character Recognition API
+-----------------------------------
+
+Author: Ashkan Sadri Ghamshi
+Project: Advanced OCR System for Handwritten Character Recognition
+Version: 1.0.0
+License: Proprietary
+Created: January 2024
+"""
+
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
