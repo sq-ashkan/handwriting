@@ -1,3 +1,19 @@
+"""
+Handwritten Character Recognition System
+
+A deep learning-based OCR system for recognizing handwritten characters.
+
+Author: Ashkan Sadri Ghamshi
+Project: Deep Learning Character Recognition System
+Course: HAWK University - Computer Science Department
+Version: 1.0.0
+Date: January 2025
+
+This module is part of an academic project that implements a high-accuracy
+Optical Character Recognition (OCR) system specialized in recognizing 
+handwritten uppercase letters (A-Z) and digits (0-9).
+"""
+
 import os
 import sys
 import logging
