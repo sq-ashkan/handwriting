@@ -26,12 +26,123 @@ import logging
 import multiprocessing
 from torch.optim.lr_scheduler import OneCycleLR
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
+# Create plots directory
+PLOTS_DIR = Path('training_plots')
+PLOTS_DIR.mkdir(exist_ok=True)
+
+# Configure matplotlib
+plt.style.use('default')
+plt.rcParams['figure.dpi'] = 300
+plt.rcParams['savefig.dpi'] = 300
+
+def save_training_progress(train_losses, train_accs, val_losses, val_accs, epochs):
+    """Save training and validation metrics plot."""
+    plt.figure(figsize=(12, 6))
+    
+    # Plot loss
+    plt.subplot(1, 2, 1)
+    plt.plot(range(1, epochs + 1), train_losses, 'b-', label='Training Loss')
+    plt.plot(range(1, epochs + 1), val_losses, 'r-', label='Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.title('Training and Validation Loss')
+    
+    # Plot accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(range(1, epochs + 1), train_accs, 'b-', label='Training Accuracy')
+    plt.plot(range(1, epochs + 1), val_accs, 'r-', label='Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy (%)')
+    plt.legend()
+    plt.title('Training and Validation Accuracy')
+    
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'training_progress_epoch_{epochs}.png')
+    plt.close()
+
+def save_tsne_visualization(features, labels, class_names, epoch):
+    """Save t-SNE visualization of the learned features."""
+    # Perform t-SNE dimensionality reduction
+    tsne = TSNE(n_components=2, random_state=42, perplexity=30)
+    features_2d = tsne.fit_transform(features)
+    
+    # Create scatter plot
+    plt.figure(figsize=(15, 10))  
+    scatter = plt.scatter(features_2d[:, 0], features_2d[:, 1], 
+                         c=labels, cmap='tab20', alpha=0.6, s=100) 
+    
+    # Calculate centroids for each class
+    for idx, class_name in enumerate(class_names):
+        mask = labels == idx
+        if np.any(mask):
+            centroid_x = features_2d[mask, 0].mean()
+            centroid_y = features_2d[mask, 1].mean()
+            plt.annotate(class_name, (centroid_x, centroid_y),
+                        fontsize=12, fontweight='bold',
+                        ha='center', va='center',
+                        bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
+    
+    plt.legend(scatter.legend_elements()[0], 
+              class_names,
+              loc="center left",
+              bbox_to_anchor=(1, 0.5),
+              title="Classes")
+    
+    plt.title(f't-SNE Visualization of Learned Features (Epoch {epoch})')
+    plt.xlabel('t-SNE Component 1')
+    plt.ylabel('t-SNE Component 2')
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'tsne_visualization_epoch_{epoch}.png', bbox_inches='tight')
+    plt.close()
+
+def save_learning_rate_plot(lr_history, epoch):
+    """Save learning rate changes plot."""
+    plt.figure(figsize=(10, 5))
+    plt.plot(lr_history)
+    plt.xlabel('Training Steps')
+    plt.ylabel('Learning Rate')
+    plt.title(f'Learning Rate Schedule (Epoch {epoch})')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'learning_rate_epoch_{epoch}.png')
+    plt.close()
+
+def save_per_class_accuracy(class_correct, class_total, class_names, epoch):
+    """Save per-class accuracy plot."""
+    accuracies = [100 * correct / total for correct, total in zip(class_correct, class_total)]
+    
+    plt.figure(figsize=(15, 6))
+    bars = plt.bar(class_names, accuracies)
+    plt.xlabel('Classes')
+    plt.ylabel('Accuracy (%)')
+    plt.title(f'Per-Class Accuracy (Epoch {epoch})')
+    plt.xticks(rotation=45)
+    
+    # Add value labels on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.1f}%',
+                ha='center', va='bottom')
+    
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'per_class_accuracy_epoch_{epoch}.png')
+    plt.close()
+
+def should_visualize(epoch: int) -> bool:
+    """Determine if visualization should be performed for this epoch."""
+    return epoch == 1 or epoch % 10 == 0
 
 def is_valid_image(file_path: str) -> bool:
     """Check if the file is a valid image file."""
@@ -218,6 +329,21 @@ def train(
         anneal_strategy='cos'
     )
     
+    # Initialize tracking variables
+    train_losses = []
+    train_accs = []
+    val_losses = []
+    val_accs = []
+    lr_history = []
+    
+    # Get class names
+    idx_to_label = {v: k for k, v in dataset.label_to_idx.items()}
+    class_names = [idx_to_label[i] for i in range(len(dataset.label_to_idx))]
+    
+    # Initialize per-class tracking
+    class_correct = [0] * len(dataset.label_to_idx)
+    class_total = [0] * len(dataset.label_to_idx)
+    
     # Training loop
     best_acc = 0.0
     for epoch in range(epochs):
@@ -237,6 +363,9 @@ def train(
             optimizer.step()
             scheduler.step()
             
+            # Track learning rate
+            lr_history.append(optimizer.param_groups[0]['lr'])
+            
             train_loss += loss.item()
             _, predicted = outputs.max(1)
             train_total += labels.size(0)
@@ -247,16 +376,31 @@ def train(
                 'acc': 100. * train_correct / train_total
             })
         
+        epoch_train_loss = train_loss / len(train_loader)
+        epoch_train_acc = 100. * train_correct / train_total
+        train_losses.append(epoch_train_loss)
+        train_accs.append(epoch_train_acc)
+        
         # Validation phase
         model.eval()
         val_loss = 0.0
         val_correct = 0
         val_total = 0
+        features_list = []
+        labels_list = []
         
         with torch.no_grad():
             pbar = tqdm(val_loader, desc=f'Epoch {epoch + 1}/{epochs} [Val]')
             for inputs, labels in pbar:
                 inputs, labels = inputs.to(device), labels.to(device)
+                
+                # Only extract features if we're going to visualize this epoch
+                if should_visualize(epoch + 1):
+                    features = model.avg_pool(model.layer3(model.layer2(
+                        model.layer1(F.relu(model.bn1(model.conv1(inputs))))))).view(inputs.size(0), -1)
+                    features_list.append(features.cpu().numpy())
+                    labels_list.append(labels.cpu().numpy())
+                
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
                 
@@ -265,21 +409,43 @@ def train(
                 val_total += labels.size(0)
                 val_correct += predicted.eq(labels).sum().item()
                 
+                # Track per-class accuracy
+                for label, pred in zip(labels, predicted):
+                    if label == pred:
+                        class_correct[label] += 1
+                    class_total[label] += 1
+                
                 pbar.set_postfix({
                     'loss': val_loss / (pbar.n + 1),
                     'acc': 100. * val_correct / val_total
                 })
         
-        val_acc = 100. * val_correct / val_total
-        logging.info(f'Epoch {epoch + 1} | '
-                    f'Train Loss: {train_loss / len(train_loader):.3f} | '
-                    f'Train Acc: {100. * train_correct / train_total:.2f}% | '
-                    f'Val Loss: {val_loss / len(val_loader):.3f} | '
-                    f'Val Acc: {val_acc:.2f}%')
+        epoch_val_loss = val_loss / len(val_loader)
+        epoch_val_acc = 100. * val_correct / val_total
+        val_losses.append(epoch_val_loss)
+        val_accs.append(epoch_val_acc)
         
-        if val_acc > best_acc:
-            logging.info(f'New best accuracy: {val_acc:.2f}%')
-            best_acc = val_acc
+        # Log performance
+        logging.info(f'Epoch {epoch + 1} | '
+                    f'Train Loss: {epoch_train_loss:.3f} | '
+                    f'Train Acc: {epoch_train_acc:.2f}% | '
+                    f'Val Loss: {epoch_val_loss:.3f} | '
+                    f'Val Acc: {epoch_val_acc:.2f}%')
+        
+        # Save plots only on specific epochs
+        if should_visualize(epoch + 1):
+            logging.info(f'Generating visualizations for epoch {epoch + 1}...')
+            save_training_progress(train_losses, train_accs, val_losses, val_accs, epoch + 1)
+            if features_list and labels_list:
+                features_array = np.concatenate(features_list)
+                labels_array = np.concatenate(labels_list)
+                save_tsne_visualization(features_array, labels_array, class_names, epoch + 1)
+            save_learning_rate_plot(lr_history, epoch + 1)
+            save_per_class_accuracy(class_correct, class_total, class_names, epoch + 1)
+        
+        if epoch_val_acc > best_acc:
+            logging.info(f'New best accuracy: {epoch_val_acc:.2f}%')
+            best_acc = epoch_val_acc
             torch.save(model.state_dict(), 'best_model.pth')
             
             if best_acc >= 99.0:
