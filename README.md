@@ -32,30 +32,37 @@ This project implements a high-accuracy Optical Character Recognition (OCR) syst
 
 ### Project Structure
 ```
-├── api/
-    └── inference.py                     # Serverless for Vercel deployment
-├── main_orchestrator.py                 # Main workflow manager
-├── best_model.pth                       # Trained model weights
-├── requirements.txt                     # Project dependencies
-└── src/                                # Core project code
-    ├── api/                            # API related files
-    ├── lib/                            # Utility libraries
-    ├── model/                          # Model related files
-    ├── operators/                      # Main operators
-    └── services/                       # Core services
-        ├── downloaders/                # Dataset downloaders
-        ├── enhancers/                  # Enhancement modules
-        ├── mergers/                    # Data merging modules
-        ├── preprocessor/               # Image preprocessing
-        └── processors/                 # Data processors
+├── main_orchestrator.py                              # Main workflow manager
+├── best_model.pth                                    # Trained model weights
+├── requirements.txt                                  # Project dependencies
+└── src/                                              # Core project code
+    ├── lib/                                          # Utility libraries
+        ├── cache_manager.py/                         # cleaning cashe
+        ├── config.py/                                # Config variables
+        ├── constans.py/                              # Settings varialbles
+        └── utils.py/                                 # utils - setup loging system
+    ├── operators/                                  
+        ├── main_downloader.operator.py               # (Step 1) Download 4 Datasets: Mnist - EH - A-Z - Chars74K
+        ├── main_processor.operator.py                # (Step 2) first step of proccessing like size and remove garbage data
+        ├── main_data_enhancers.operator.py           # (Step 3) work on general quality
+        ├── main_modifier.operator.py                 # (Step 4) Merg and verify all datasets together
+        └── main_augmentation.operator.py             # (Step 5) Data augmentator make Data ready
+    ├── model                                     
+            └── train.operator.py                     # (Step 6) model trainer and make best_model file in root
+    └── services/                                     # Core services
+        ├── downloaders/                              # Dataset downloaders Services
+        ├── enhancers/                                # Enhancement modules Services
+        ├── mergers/                                  # Data merging modules Services
+        ├── preprocessor/                             # Image preprocessing Services
+        └── processors/                               # Data processors Services
 ```
 
 ## Dataset Information
 - **Total Classes**: 36 (A-Z + 0-9)
 - **Samples per Class**: 20,000
-- **Image Format**: 27x27 PNG, grayscale
+- **Image Format**: 27x27 PNG, grayscale (binary black and white)
 - **Total Dataset Size**: 720,000 images
-- **Data Distribution**: Balanced across all classes
+- **Data Distribution**: perfect Balanced across all classes
 
 ## Setup and Installation
 
@@ -138,7 +145,7 @@ print(response.json())
 - **OS**: macOS
 - **Hardware**: Apple M2 Ultra (24-core CPU, 76-core GPU)
 - **RAM**: 40GB allocated
-- **Development Tools**: PyCharm, Visual Studio Code
+- **Development Tools**: Visual Studio Code
 
 ## Academic Notes
 This project demonstrates several advanced concepts in deep learning and computer vision:
@@ -152,6 +159,6 @@ This project demonstrates several advanced concepts in deep learning and compute
 This project is part of academic coursework at HAWK University and is protected under academic guidelines.
 
 ## Acknowledgments
-- HAWK University Computer Science Department
+- HAWK University "Technische Informatik und Robotik" Department
 - Chars74K - A-Z - MNIST - English handwriting - EMNIST (processed but not used in model)
 - PyTorch Community
