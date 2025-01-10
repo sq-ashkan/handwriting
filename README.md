@@ -75,7 +75,7 @@ This project implements a high-accuracy Optical Character Recognition (OCR) syst
 1. Clone the repository:
    ```bash
    git clone https://github.com/sq-ashkan/handwriting 
-   cd handwriting-recognition
+   cd handwriting
    ```
 
 2. Create and activate a conda environment:
