@@ -74,7 +74,7 @@ This project implements a high-accuracy Optical Character Recognition (OCR) syst
 ### Installation Steps
 1. Clone the repository:
    ```bash
-   git clone [repository-url]
+   git clone https://github.com/sq-ashkan/handwriting 
    cd handwriting-recognition
    ```
 
