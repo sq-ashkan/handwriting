@@ -94,7 +94,7 @@ This project implements a high-accuracy Optical Character Recognition (OCR) syst
 #### Backend API
 1. Start the Flask server:
    ```bash
-   python app.py
+   python3.8 app.py
    ```
    The server will start on `http://localhost:5001`
 
