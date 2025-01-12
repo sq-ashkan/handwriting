@@ -101,7 +101,7 @@ HTML_TEMPLATE = """
             <p><strong>Author:</strong> Ashkan Sadri Ghamshi</p>
             <p><strong>Institution:</strong> HAWK University</p>
             <p><strong>Project:</strong> Deep Learning Character Recognition System</p>
-            <p><strong>Date:</strong> Winter 2025</p>
+            <p><strong>Date:</strong> Jan 2025</p>
         </div>
 
         <h2>API Documentation</h2>
