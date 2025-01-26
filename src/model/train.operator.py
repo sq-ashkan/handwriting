@@ -29,6 +29,8 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from pathlib import Path
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
 
 # Configure logging
 logging.basicConfig(
@@ -45,7 +47,7 @@ plt.style.use('default')
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
 
-def save_training_progress(train_losses, train_accs, val_losses, val_accs, epochs):
+def save_training_progress(train_losses, train_accs, val_losses, val_accs, epochs, phase):
     """Save training and validation metrics plot."""
     plt.figure(figsize=(12, 6))
     
@@ -56,7 +58,7 @@ def save_training_progress(train_losses, train_accs, val_losses, val_accs, epoch
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.title('Training and Validation Loss')
+    plt.title(f'Training and Validation Loss - Phase {phase}')
     
     # Plot accuracy
     plt.subplot(1, 2, 2)
@@ -65,13 +67,30 @@ def save_training_progress(train_losses, train_accs, val_losses, val_accs, epoch
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy (%)')
     plt.legend()
-    plt.title('Training and Validation Accuracy')
+    plt.title(f'Training and Validation Accuracy - Phase {phase}')
     
     plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f'training_progress_epoch_{epochs}.png')
+    plt.savefig(PLOTS_DIR / f'phase{phase}_training_progress_epoch_{epochs}.png')
     plt.close()
 
-def save_tsne_visualization(features, labels, class_names, epoch):
+def save_confusion_matrix(y_true, y_pred, class_names, epoch, phase):
+    """Save confusion matrix visualization."""
+    # Compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+    
+    # Create figure and plot
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                xticklabels=class_names,
+                yticklabels=class_names)
+    plt.title(f'Confusion Matrix - Phase {phase} (Epoch {epoch})')
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'phase{phase}_confusion_matrix_epoch_{epoch}.png')
+    plt.close()
+
+def save_tsne_visualization(features, labels, class_names, epoch, phase):
     """Save t-SNE visualization of the learned features."""
     # Perform t-SNE dimensionality reduction
     tsne = TSNE(n_components=2, random_state=42, perplexity=30)
@@ -99,26 +118,26 @@ def save_tsne_visualization(features, labels, class_names, epoch):
               bbox_to_anchor=(1, 0.5),
               title="Classes")
     
-    plt.title(f't-SNE Visualization of Learned Features (Epoch {epoch})')
+    plt.title(f't-SNE Visualization - Phase {phase} (Epoch {epoch})')
     plt.xlabel('t-SNE Component 1')
     plt.ylabel('t-SNE Component 2')
     plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f'tsne_visualization_epoch_{epoch}.png', bbox_inches='tight')
+    plt.savefig(PLOTS_DIR / f'phase{phase}_tsne_visualization_epoch_{epoch}.png', bbox_inches='tight')
     plt.close()
 
-def save_learning_rate_plot(lr_history, epoch):
+def save_learning_rate_plot(lr_history, epoch, phase):
     """Save learning rate changes plot."""
     plt.figure(figsize=(10, 5))
     plt.plot(lr_history)
     plt.xlabel('Training Steps')
     plt.ylabel('Learning Rate')
-    plt.title(f'Learning Rate Schedule (Epoch {epoch})')
+    plt.title(f'Learning Rate Schedule - Phase {phase} (Epoch {epoch})')
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f'learning_rate_epoch_{epoch}.png')
+    plt.savefig(PLOTS_DIR / f'phase{phase}_learning_rate_epoch_{epoch}.png')
     plt.close()
 
-def save_per_class_accuracy(class_correct, class_total, class_names, epoch):
+def save_per_class_accuracy(class_correct, class_total, class_names, epoch, phase):
     """Save per-class accuracy plot."""
     accuracies = [100 * correct / total for correct, total in zip(class_correct, class_total)]
     
@@ -126,7 +145,7 @@ def save_per_class_accuracy(class_correct, class_total, class_names, epoch):
     bars = plt.bar(class_names, accuracies)
     plt.xlabel('Classes')
     plt.ylabel('Accuracy (%)')
-    plt.title(f'Per-Class Accuracy (Epoch {epoch})')
+    plt.title(f'Per-Class Accuracy - Phase {phase} (Epoch {epoch})')
     plt.xticks(rotation=45)
     
     # Add value labels on top of bars
@@ -137,7 +156,7 @@ def save_per_class_accuracy(class_correct, class_total, class_names, epoch):
                 ha='center', va='bottom')
     
     plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f'per_class_accuracy_epoch_{epoch}.png')
+    plt.savefig(PLOTS_DIR / f'phase{phase}_per_class_accuracy_epoch_{epoch}.png')
     plt.close()
 
 def should_visualize(epoch: int) -> bool:
@@ -283,7 +302,8 @@ def train(
     batch_size: int = 128,
     epochs: int = 50,
     initial_lr: float = 0.001,
-    num_workers: int = 8
+    num_workers: int = 8,
+    phase: int = 1
 ) -> nn.Module:
     
     # Device configuration - MPS for M2 Ultra
@@ -318,8 +338,7 @@ def train(
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=initial_lr, weight_decay=0.01)
-    
-    # Learning rate scheduler
+# Learning rate scheduler
     scheduler = OneCycleLR(
         optimizer,
         max_lr=initial_lr,
@@ -352,7 +371,7 @@ def train(
         train_correct = 0
         train_total = 0
         
-        pbar = tqdm(train_loader, desc=f'Epoch {epoch + 1}/{epochs} [Train]')
+        pbar = tqdm(train_loader, desc=f'Phase {phase} - Epoch {epoch + 1}/{epochs} [Train]')
         for inputs, labels in pbar:
             inputs, labels = inputs.to(device), labels.to(device)
             
@@ -388,9 +407,11 @@ def train(
         val_total = 0
         features_list = []
         labels_list = []
+        all_predictions = []
+        all_labels = []
         
         with torch.no_grad():
-            pbar = tqdm(val_loader, desc=f'Epoch {epoch + 1}/{epochs} [Val]')
+            pbar = tqdm(val_loader, desc=f'Phase {phase} - Epoch {epoch + 1}/{epochs} [Val]')
             for inputs, labels in pbar:
                 inputs, labels = inputs.to(device), labels.to(device)
                 
@@ -409,6 +430,10 @@ def train(
                 val_total += labels.size(0)
                 val_correct += predicted.eq(labels).sum().item()
                 
+                # Store predictions and labels for confusion matrix
+                all_predictions.extend(predicted.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+                
                 # Track per-class accuracy
                 for label, pred in zip(labels, predicted):
                     if label == pred:
@@ -426,7 +451,7 @@ def train(
         val_accs.append(epoch_val_acc)
         
         # Log performance
-        logging.info(f'Epoch {epoch + 1} | '
+        logging.info(f'Phase {phase} - Epoch {epoch + 1} | '
                     f'Train Loss: {epoch_train_loss:.3f} | '
                     f'Train Acc: {epoch_train_acc:.2f}% | '
                     f'Val Loss: {epoch_val_loss:.3f} | '
@@ -434,22 +459,24 @@ def train(
         
         # Save plots only on specific epochs
         if should_visualize(epoch + 1):
-            logging.info(f'Generating visualizations for epoch {epoch + 1}...')
-            save_training_progress(train_losses, train_accs, val_losses, val_accs, epoch + 1)
+            logging.info(f'Generating visualizations for phase {phase}, epoch {epoch + 1}...')
+            save_training_progress(train_losses, train_accs, val_losses, val_accs, epoch + 1, phase)
             if features_list and labels_list:
                 features_array = np.concatenate(features_list)
                 labels_array = np.concatenate(labels_list)
-                save_tsne_visualization(features_array, labels_array, class_names, epoch + 1)
-            save_learning_rate_plot(lr_history, epoch + 1)
-            save_per_class_accuracy(class_correct, class_total, class_names, epoch + 1)
+                save_tsne_visualization(features_array, labels_array, class_names, epoch + 1, phase)
+            save_learning_rate_plot(lr_history, epoch + 1, phase)
+            save_per_class_accuracy(class_correct, class_total, class_names, epoch + 1, phase)
+            save_confusion_matrix(all_labels, all_predictions, class_names, epoch + 1, phase)
         
+        # Save best model
         if epoch_val_acc > best_acc:
-            logging.info(f'New best accuracy: {epoch_val_acc:.2f}%')
+            logging.info(f'Phase {phase} - New best accuracy: {epoch_val_acc:.2f}%')
             best_acc = epoch_val_acc
-            torch.save(model.state_dict(), 'best_model.pth')
+            torch.save(model.state_dict(), f'best_model_phase{phase}.pth')
             
             if best_acc >= 99.0:
-                logging.info(f'Reached target accuracy of 99%!')
+                logging.info(f'Phase {phase} - Reached target accuracy of 99%!')
                 break
     
     return model
@@ -458,21 +485,23 @@ if __name__ == '__main__':
     # Set number of CPU threads for data loading
     num_workers = min(8, multiprocessing.cpu_count())
     
-    # Start with smaller dataset
-    logging.info("Starting initial training with 1000 samples per class...")
+    # Phase 1: Initial training with limited data
+    logging.info("Starting phase 1: initial training with 1000 samples per class...")
     model = train(
         data_dir='data/processed',
         max_samples=1000,
         batch_size=128,
         epochs=20,
-        num_workers=num_workers
+        num_workers=num_workers,
+        phase=1  # Specify phase 1
     )
     
-    # If successful, train on full dataset
-    logging.info("Starting full dataset training...")
+    # Phase 2: Full dataset training
+    logging.info("Starting phase 2: full dataset training...")
     model = train(
         data_dir='data/processed',
         batch_size=128,
         epochs=50,
-        num_workers=num_workers
+        num_workers=num_workers,
+        phase=2  # Specify phase 2
     )
