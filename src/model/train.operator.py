@@ -312,9 +312,11 @@ def train(
     
     # Load and split dataset
     dataset = OCRDataset(data_dir, max_samples)
-    train_size = int(0.8 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    total_size = len(dataset)
+    train_size = int(0.80 * total_size)
+    val_size = int(0.15 * total_size)
+    test_size = total_size - train_size - val_size
+    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
     
     train_loader = DataLoader(
         train_dataset,
@@ -331,6 +333,14 @@ def train(
         num_workers=num_workers,
         pin_memory=True
     )
+
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True
+    )
     
     # Initialize model and move to device
     model = OptimizedOCR(num_classes=len(dataset.label_to_idx)).to(device)
@@ -338,7 +348,8 @@ def train(
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=initial_lr, weight_decay=0.01)
-# Learning rate scheduler
+    
+    # Learning rate scheduler
     scheduler = OneCycleLR(
         optimizer,
         max_lr=initial_lr,
@@ -478,6 +489,37 @@ def train(
             if best_acc >= 99.0:
                 logging.info(f'Phase {phase} - Reached target accuracy of 99%!')
                 break
+
+    # Test phase
+    model.eval()
+    test_loss = 0.0
+    test_correct = 0
+    test_total = 0
+    all_test_predictions = []
+    all_test_labels = []
+
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            
+            test_loss += loss.item()
+            _, predicted = outputs.max(1)
+            test_total += labels.size(0)
+            test_correct += predicted.eq(labels).sum().item()
+            
+            all_test_predictions.extend(predicted.cpu().numpy())
+            all_test_labels.extend(labels.cpu().numpy())
+
+    test_acc = 100. * test_correct / test_total
+    test_loss = test_loss / len(test_loader)
+    logging.info(f'Phase {phase} - Final Test Results | '
+                f'Loss: {test_loss:.3f} | '
+                f'Acc: {test_acc:.2f}%')
+    
+    # Save test confusion matrix
+    save_confusion_matrix(all_test_labels, all_test_predictions, class_names, epochs, phase)
     
     return model
 
@@ -493,7 +535,7 @@ if __name__ == '__main__':
         batch_size=128,
         epochs=20,
         num_workers=num_workers,
-        phase=1  # Specify phase 1
+        phase=1
     )
     
     # Phase 2: Full dataset training
@@ -503,5 +545,5 @@ if __name__ == '__main__':
         batch_size=128,
         epochs=50,
         num_workers=num_workers,
-        phase=2  # Specify phase 2
+        phase=2
     )
